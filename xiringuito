@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+# Bash SSH VPN wrapper
+#
+set -e
+
+if [[ ${#} -lt 1 ]]; then
+  echo "Usage: ${0} [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
+  exit 1
+fi
+
+declare -r SSH_SERVER=${1}; shift
+declare -r NETWORKS=${@}
+
+declare -r IP_BASE=192.168.245
+declare -r TUNNEL_ID_PATH=~/.xiringuito/tunnel_id
+declare -r TUNNEL_ID_FILE=${TUNNEL_ID_PATH}/${SSH_SERVER}
+
+if [[ ! -f ${TUNNEL_ID_FILE} ]]; then
+  mkdir -p ${TUNNEL_ID_PATH}
+  let GENERATED_ID=${RANDOM}%50+1
+  echo ${GENERATED_ID} >${TUNNEL_ID_FILE}
+fi
+
+declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
+
+cd $(dirname ${0})
+
+trap teardown EXIT
+
+function teardown() {
+  echo "Tearing down tunnel..."
+  ./scripts/client-teardown.sh ${TUNNEL_ID}
+  echo "Ensuring remote process is stopped."
+  ssh -oLogLevel=QUIET ${SSH_SERVER} pkill -f xiringuito-server-execute.${TUNNEL_ID}.sh
+}
+
+./scripts/client-setup.sh ${TUNNEL_ID} ${IP_BASE} ${NETWORKS}
+
+scp -oLogLevel=QUIET ./scripts/server-setup.sh ${SSH_SERVER}:/tmp/xiringuito-server-setup.${TUNNEL_ID}.sh >/dev/null
+scp -oLogLevel=QUIET ./scripts/server-execute.sh ${SSH_SERVER}:/tmp/xiringuito-server-execute.${TUNNEL_ID}.sh >/dev/null
+
+ssh -oLogLevel=QUIET ${SSH_SERVER} /tmp/xiringuito-server-setup.${TUNNEL_ID}.sh ${TUNNEL_ID} ${IP_BASE}
+sleep 1
+ssh -oLogLevel=QUIET -w ${TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} /tmp/xiringuito-server-execute.${TUNNEL_ID}.sh ${TUNNEL_ID} ${IP_BASE}

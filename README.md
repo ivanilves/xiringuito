@@ -1,2 +1,2 @@
 # xiringuito
-Simple, automated and opinionated SSH VPN
+Bash SSH VPN wrapper
