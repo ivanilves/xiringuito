@@ -24,6 +24,7 @@ function teardown() {
   sudo ip tuntap del mode tun ${NETWORK_DEVICE}
 }
 
+echo "CONNECTED"
 while true; do
   sleep 60000 # do nothing until interrupted ;)
 done

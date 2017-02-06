@@ -1,2 +1,2 @@
 # xiringuito
-Bash SSH VPN wrapper
+Obscene SSH VPN wrapper

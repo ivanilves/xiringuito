@@ -23,6 +23,9 @@ if [[ ! -f ${TUNNEL_ID_FILE} ]]; then
 fi
 
 declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
+declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
+
+declare -r SSH_OPTS="-oLogLevel=QUIET -oConnectTimeout=10"
 
 cd $(dirname ${0})
 
@@ -31,15 +34,20 @@ trap teardown EXIT
 function teardown() {
   echo "Tearing down tunnel..."
   ./scripts/client-teardown.sh ${TUNNEL_ID}
-  echo "Ensuring remote process is stopped."
-  ssh -oLogLevel=QUIET ${SSH_SERVER} pkill -f xiringuito-server-execute.${TUNNEL_ID}.sh
+  ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh
 }
 
-./scripts/client-setup.sh ${TUNNEL_ID} ${IP_BASE} ${NETWORKS}
+echo "TUNNEL ID: ${TUNNEL_ID}"
+./scripts/client-setup.sh ${TUNNEL_ID} ${IP_BASE}
 
-scp -oLogLevel=QUIET ./scripts/server-setup.sh ${SSH_SERVER}:/tmp/xiringuito-server-setup.${TUNNEL_ID}.sh >/dev/null
-scp -oLogLevel=QUIET ./scripts/server-execute.sh ${SSH_SERVER}:/tmp/xiringuito-server-execute.${TUNNEL_ID}.sh >/dev/null
+for NETWORK in ${NETWORKS}; do
+   echo "> ROUTE: ${NETWORK}"
+  ./scripts/client-route.sh ${TUNNEL_ID} ${NETWORK}
+done
 
-ssh -oLogLevel=QUIET ${SSH_SERVER} /tmp/xiringuito-server-setup.${TUNNEL_ID}.sh ${TUNNEL_ID} ${IP_BASE}
-sleep 1
-ssh -oLogLevel=QUIET -w ${TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} /tmp/xiringuito-server-execute.${TUNNEL_ID}.sh ${TUNNEL_ID} ${IP_BASE}
+ssh ${SSH_OPTS} ${SSH_SERVER} mkdir -p ${REMOTE_PATH}
+scp -oLogLevel=QUIET ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null
+
+ssh ${SSH_OPTS} ${SSH_SERVER} ${REMOTE_PATH}/server-setup.sh ${TUNNEL_ID} ${IP_BASE}
+sleep 1; echo -n "SERVER: ${SSH_SERVER} ... "
+ssh ${SSH_OPTS} -w ${TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE}

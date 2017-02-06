@@ -19,15 +19,15 @@ declare -r CLIENT_IP_ADDR=${IP_BASE}.${CLIENT_LAST_IP_ADDR_OCTET}
 declare -r SERVER_IP_ADDR=${IP_BASE}.${SERVER_LAST_IP_ADDR_OCTET}
 
 declare -r SSHD_CONFIG_FILE=/etc/ssh/sshd_config
-declare -r SSHD_RESTART_CMD="reload ssh"
+declare -r SSHD_RESTART_CMD="/etc/init.d/sshd reload"
 
 # Ensure previous tunnels with the same ID are not running
 set +e
-pkill -f xiringuito-server-execute.${TUNNEL_ID}.sh
+pkill -f ${TUNNEL_ID}/server-execute.sh
 set -e
 
 # Set up network device
-if [[ ! $(ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
+if [[ ! $(sudo ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
   sudo modprobe tun
   sudo ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE}
   sudo ip link set ${NETWORK_DEVICE} up
