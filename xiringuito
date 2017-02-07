@@ -32,12 +32,20 @@ cd $(dirname ${0})
 trap teardown EXIT
 
 function teardown() {
+  set +e
   echo "Tearing down tunnel..."
+  if [[ -f /etc/resolv.conf.orig ]]; then
+    sudo cp /etc/resolv.conf.orig /etc/resolv.conf
+  fi
+  if [[ ${SSH_PID} ]]; then
+    kill ${SSH_PID}
+  fi
   ./scripts/client-teardown.sh ${TUNNEL_ID}
   ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh
 }
 
 echo "TUNNEL ID: ${TUNNEL_ID}"
+
 ./scripts/client-setup.sh ${TUNNEL_ID} ${IP_BASE}
 
 for NETWORK in ${NETWORKS}; do
@@ -46,8 +54,29 @@ for NETWORK in ${NETWORKS}; do
 done
 
 ssh ${SSH_OPTS} ${SSH_SERVER} mkdir -p ${REMOTE_PATH}
-scp -oLogLevel=QUIET ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null
+scp ${SSH_OPTS} ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null
 
 ssh ${SSH_OPTS} ${SSH_SERVER} ${REMOTE_PATH}/server-setup.sh ${TUNNEL_ID} ${IP_BASE}
 sleep 1; echo -n "SERVER: ${SSH_SERVER} ... "
-ssh ${SSH_OPTS} -w ${TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE}
+ssh ${SSH_OPTS} -w ${TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} &
+SSH_PID=${!}
+sleep 2
+
+if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" ]]; then
+  echo
+  echo "* Will now replace your DNS config with one fetched from the SSH server."
+  echo "* Set enviromental variable 'NO_DNS', if you do not want this to happen."
+  REMOTE_RESOLV_CONF=$(ssh ${SSH_OPTS} ${SSH_SERVER} cat /etc/resolv.conf | grep -v "[#;]" )
+  if [[ ! "$(grep xiringuito /etc/resolv.conf)" ]]; then
+    sudo cp /etc/resolv.conf /etc/resolv.conf.orig
+
+    if [[ "${REMOTE_RESOLV_CONF}" =~ nameserver ]]; then
+      echo "--- resolv.conf ---"
+      echo "# Added by xiringuito" | sudo tee /etc/resolv.conf
+      echo "${REMOTE_RESOLV_CONF}" | sudo tee -a /etc/resolv.conf
+      echo "--- resolv.conf ---"
+    fi
+  fi
+fi
+
+while true; do sleep 60000; done
