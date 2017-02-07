@@ -74,6 +74,7 @@ if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" ]]; then
       echo "--- resolv.conf ---"
       echo "# Added by xiringuito" | sudo tee /etc/resolv.conf
       echo "${REMOTE_RESOLV_CONF}" | sudo tee -a /etc/resolv.conf
+      echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
       echo "--- resolv.conf ---"
     fi
   fi
