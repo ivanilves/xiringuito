@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+#
+# Route discovery primer for AWS
+#
+if [[ ${#} != 1 ]]; then
+  echo "Usage: ${0} SSH_SERVER"
+  exit 1
+fi
+
+export AWS_PROFILE=$(echo ${1} | awk -F"." '{print $2}')
+
+aws ec2 describe-subnets | grep CidrBlock\":\ \"10 | awk -F"\"" '{print $4}'

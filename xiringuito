@@ -10,7 +10,12 @@ if [[ ${#} -lt 1 ]]; then
 fi
 
 declare -r SSH_SERVER=${1}; shift
-declare -r NETWORKS=${@}
+
+if [[ ${#} -gt 0 ]]; then
+  declare -r NETWORKS=${@}
+elif [[ -x ./discover-routes ]]; then
+  declare -r NETWORKS=$(./discover-routes ${SSH_SERVER})
+fi
 
 declare -r IP_BASE=192.168.245
 declare -r TUNNEL_ID_PATH=~/.xiringuito/tunnel_id
@@ -42,6 +47,7 @@ function teardown() {
   fi
   ./scripts/client-teardown.sh ${TUNNEL_ID}
   ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh
+  echo "DONE"
 }
 
 echo "TUNNEL ID: ${TUNNEL_ID}"
@@ -60,23 +66,22 @@ ssh ${SSH_OPTS} ${SSH_SERVER} ${REMOTE_PATH}/server-setup.sh ${TUNNEL_ID} ${IP_B
 sleep 1; echo -n "SERVER: ${SSH_SERVER} ... "
 ssh ${SSH_OPTS} -w ${TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} &
 SSH_PID=${!}
-sleep 2
+sleep 3
 
-if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" ]]; then
+if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" && ! "$(grep xiringuito /etc/resolv.conf)" ]]; then
   echo
   echo "* Will now replace your DNS config with one fetched from the SSH server."
   echo "* Set enviromental variable 'NO_DNS', if you do not want this to happen."
   REMOTE_RESOLV_CONF=$(ssh ${SSH_OPTS} ${SSH_SERVER} cat /etc/resolv.conf | grep -v "[#;]" )
-  if [[ ! "$(grep xiringuito /etc/resolv.conf)" ]]; then
-    sudo cp /etc/resolv.conf /etc/resolv.conf.orig
 
-    if [[ "${REMOTE_RESOLV_CONF}" =~ nameserver ]]; then
-      echo "--- resolv.conf ---"
-      echo "# Added by xiringuito" | sudo tee /etc/resolv.conf
-      echo "${REMOTE_RESOLV_CONF}" | sudo tee -a /etc/resolv.conf
-      echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
-      echo "--- resolv.conf ---"
-    fi
+  sudo cp /etc/resolv.conf /etc/resolv.conf.orig
+
+  if [[ "${REMOTE_RESOLV_CONF}" =~ nameserver ]]; then
+    echo "--- resolv.conf ---"
+    echo "# Added by xiringuito" | sudo tee /etc/resolv.conf
+    echo "${REMOTE_RESOLV_CONF}" | sudo tee -a /etc/resolv.conf
+    echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
+    echo "--- resolv.conf ---"
   fi
 fi
 
