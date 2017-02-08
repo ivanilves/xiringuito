@@ -30,7 +30,7 @@ fi
 declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
 declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
 
-declare -r SSH_OPTS="-oLogLevel=QUIET -oConnectTimeout=10"
+declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-QUIET} -oConnectTimeout=10"
 
 cd $(dirname ${0})
 
@@ -54,10 +54,12 @@ echo "TUNNEL ID: ${TUNNEL_ID}"
 
 ./scripts/client-setup.sh ${TUNNEL_ID} ${IP_BASE}
 
+set +e
 for NETWORK in ${NETWORKS}; do
    echo "> ROUTE: ${NETWORK}"
   ./scripts/client-route.sh ${TUNNEL_ID} ${NETWORK}
 done
+set -e
 
 ssh ${SSH_OPTS} ${SSH_SERVER} mkdir -p ${REMOTE_PATH}
 scp ${SSH_OPTS} ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null

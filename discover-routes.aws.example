@@ -9,4 +9,4 @@ fi
 
 export AWS_PROFILE=$(echo ${1} | awk -F"." '{print $2}')
 
-aws ec2 describe-subnets | grep CidrBlock\":\ \"10 | awk -F"\"" '{print $4}'
+aws ec2 describe-subnets | grep CidrBlock\":\ \"10 | awk -F"\"" '{print $4}' | sort | uniq
