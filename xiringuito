@@ -30,7 +30,7 @@ fi
 declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
 declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
 
-declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-QUIET} -oConnectTimeout=10"
+declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectTimeout=10"
 
 cd $(dirname ${0})
 
