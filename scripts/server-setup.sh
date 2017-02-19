@@ -31,7 +31,7 @@ if [[ ! $(sudo ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
   sudo modprobe tun
   sudo ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE}
   sudo ip link set ${NETWORK_DEVICE} up
-  sudo ip addr add ${SERVER_IP_ADDR}/30 dev ${NETWORK_DEVICE}
+  sudo ip addr add ${SERVER_IP_ADDR}/32 peer ${CLIENT_IP_ADDR} dev ${NETWORK_DEVICE}
 fi
 
 # Set up SSH server for tunneling

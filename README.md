@@ -1,2 +1,2 @@
 # xiringuito
-Obscene SSH VPN wrapper
+Obscene SSH-based VPN for poors ;)

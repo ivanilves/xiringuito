@@ -1,13 +1,29 @@
 #!/usr/bin/env bash
 #
-# Bash SSH VPN wrapper
+# Obscene SSH-based VPN for poors ;)
 #
 set -e
+
+declare -r KERNEL=$(uname -s | tr [A-Z] [a-z])
+if [[ ${KERNEL} != linux && ${KERNEL} != darwin ]]; then
+  echo "Unsupported system: ${KERNEL}"
+  exit 2
+fi
+
+if [[ ${KERNEL} == darwin ]]; then
+  if [[ ! $(ls -1 /dev/tun[0-9]) ]]; then
+    echo "MacOSX Virtual Network Interface not installed!"
+    echo "Get it here: http://tuntaposx.sourceforge.net/"
+    exit 3
+  fi
+fi
 
 if [[ ${#} -lt 1 ]]; then
   echo "Usage: ${0} [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
   exit 1
 fi
+
+echo -n "[ sudo check ] "; sudo true; echo
 
 declare -r SSH_SERVER=${1}; shift
 
@@ -34,6 +50,12 @@ declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectTimeout=10"
 
 cd $(dirname ${0})
 
+if [[ ${KERNEL} == linux ]]; then
+  declare -r LOCAL_TUNNEL_ID=${TUNNEL_ID}
+else
+  declare -r LOCAL_TUNNEL_ID=$(./scripts/${KERNEL}/get-local-tunnel-id.sh)
+fi
+
 trap teardown EXIT
 
 function teardown() {
@@ -43,32 +65,55 @@ function teardown() {
     sudo cp /etc/resolv.conf.orig /etc/resolv.conf
   fi
   if [[ ${SSH_PID} ]]; then
-    kill ${SSH_PID}
+    if [[ ${KERNEL} == linux ]]; then
+      kill ${SSH_PID}
+    else
+      sudo kill ${SSH_PID}
+    fi
   fi
-  ./scripts/client-teardown.sh ${TUNNEL_ID}
+  if [[ ${KERNEL} == linux ]]; then
+    ./scripts/${KERNEL}/client-teardown.sh ${TUNNEL_ID}
+  fi
   ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh
   echo "DONE"
 }
 
-echo "TUNNEL ID: ${TUNNEL_ID}"
+echo "TUNNEL ID: ${TUNNEL_ID} (local: ${LOCAL_TUNNEL_ID})"
 
-./scripts/client-setup.sh ${TUNNEL_ID} ${IP_BASE}
-
-set +e
-for NETWORK in ${NETWORKS}; do
-   echo "> ROUTE: ${NETWORK}"
-  ./scripts/client-route.sh ${TUNNEL_ID} ${NETWORK}
-done
-set -e
+if [[ ${KERNEL} == linux ]]; then
+  ./scripts/${KERNEL}/client-setup.sh ${TUNNEL_ID} ${IP_BASE}
+fi
 
 ssh ${SSH_OPTS} ${SSH_SERVER} mkdir -p ${REMOTE_PATH}
 scp ${SSH_OPTS} ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null
 
 ssh ${SSH_OPTS} ${SSH_SERVER} ${REMOTE_PATH}/server-setup.sh ${TUNNEL_ID} ${IP_BASE}
+
 sleep 1; echo -n "SERVER: ${SSH_SERVER} ... "
-ssh ${SSH_OPTS} -w ${TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} &
+if [[ ${KERNEL} == linux ]]; then
+  SSH_TUNNEL_CMD="ssh"
+else
+  SSH_TUNNEL_CMD="sudo -E ssh"
+fi
+${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} &
 SSH_PID=${!}
-sleep 3
+
+if [[ ${KERNEL} == linux ]]; then
+  sleep 3
+else
+  sleep 5 # slow bitch!
+fi
+
+if [[ ${KERNEL} == darwin ]]; then
+  ./scripts/${KERNEL}/client-setup.sh ${TUNNEL_ID} ${LOCAL_TUNNEL_ID} ${IP_BASE}
+fi
+
+set +e
+for NETWORK in ${NETWORKS}; do
+   echo "> ROUTE: ${NETWORK}"
+  ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
+done
+set -e
 
 if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" && ! "$(grep xiringuito /etc/resolv.conf)" ]]; then
   echo
