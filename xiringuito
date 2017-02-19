@@ -132,4 +132,14 @@ if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" && ! "$(grep xiringuito /etc/resolv.conf
   fi
 fi
 
-while true; do sleep 60000; done
+set +e
+while true; do
+  if [[ ! ${NO_PING} ]]; then
+    ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
+    if [[ ${?} -ne 0 ]]; then
+      echo "* Failed to ping server-side tunnel endpoint..."
+    fi
+  fi
+
+  sleep 5
+done
