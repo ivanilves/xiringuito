@@ -114,7 +114,7 @@ if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" ]]; then
     echo "${REMOTE_RESOLV_CONF}" | ./scripts/client-update-resolv-conf.sh
 
     if [[ ${KERNEL} == darwin ]]; then
-      ./scripts/${KERNEL}/client-update-macosx-dns.sh ${LOCAL_TUNNEL_ID}
+      ./scripts/${KERNEL}/client-update-macosx-dns.sh
     fi
   fi
 fi
