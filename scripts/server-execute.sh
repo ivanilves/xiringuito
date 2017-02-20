@@ -20,6 +20,7 @@ trap teardown EXIT
 
 function teardown() {
   sudo iptables -t nat -D POSTROUTING -s ${CLIENT_IP_ADDR} -j MASQUERADE
+  kill ${PPID}
   sleep 2
   sudo ip tuntap del mode tun ${NETWORK_DEVICE}
 }

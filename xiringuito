@@ -61,7 +61,7 @@ trap teardown EXIT
 
 function teardown() {
   if [[ ${SSH_PID} ]]; then
-    ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh
+    ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh &>/dev/null &
   else
     sudo ./scripts/${KERNEL}/client-teardown.sh ${$} 0 ${LOCAL_TUNNEL_ID}
   fi
@@ -79,6 +79,9 @@ scp ${SSH_OPTS} ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null
 ssh ${SSH_OPTS} ${SSH_SERVER} ${REMOTE_PATH}/server-setup.sh ${TUNNEL_ID} ${IP_BASE}
 
 sleep 1; echo -n "SERVER: ${SSH_SERVER} ... "
+set +e
+ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh &>/dev/null
+set -e
 if [[ ${KERNEL} == linux ]]; then
   SSH_TUNNEL_CMD="ssh"
 else
@@ -88,11 +91,7 @@ ${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:$
 SSH_PID=${!}
 sudo ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
-if [[ ${KERNEL} == linux ]]; then
-  sleep 3
-else
-  sleep 5 # slow bitch!
-fi
+sleep 5
 
 if [[ ${KERNEL} == darwin ]]; then
   ./scripts/${KERNEL}/client-setup.sh ${TUNNEL_ID} ${LOCAL_TUNNEL_ID} ${IP_BASE}
