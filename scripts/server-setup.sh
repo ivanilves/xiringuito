@@ -19,7 +19,16 @@ declare -r CLIENT_IP_ADDR=${IP_BASE}.${CLIENT_LAST_IP_ADDR_OCTET}
 declare -r SERVER_IP_ADDR=${IP_BASE}.${SERVER_LAST_IP_ADDR_OCTET}
 
 declare -r SSHD_CONFIG_FILE=/etc/ssh/sshd_config
-declare -r SSHD_RESTART_CMD="/etc/init.d/sshd reload"
+
+if [[ -x /bin/systemctl && -f /lib/systemd/system/ssh.service ]]; then
+  declare -r SSHD_RESTART_CMD="systemctl reload ssh"
+elif [[ -f /etc/init/ssh.conf ]]; then
+  declare -r SSHD_RESTART_CMD="reload ssh"
+elif [[ -x /etc/init.d/sshd ]]; then
+  declare -r SSHD_RESTART_CMD="/etc/init.d/sshd reload"
+elif [[ -x /etc/init.d/ssh ]]; then
+  declare -r SSHD_RESTART_CMD="/etc/init.d/ssh reload"
+fi
 
 # Ensure previous tunnels with the same ID are not running
 set +e
