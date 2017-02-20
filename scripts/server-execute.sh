@@ -20,11 +20,11 @@ trap teardown EXIT
 
 function teardown() {
   sudo iptables -t nat -D POSTROUTING -s ${CLIENT_IP_ADDR} -j MASQUERADE
-
+  sleep 2
   sudo ip tuntap del mode tun ${NETWORK_DEVICE}
 }
 
 echo "CONNECTED"
 while true; do
-  sleep 60000 # do nothing until interrupted ;)
+  sleep 60000 # TODO: Maybe we need some heartbeat here
 done

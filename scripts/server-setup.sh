@@ -24,6 +24,8 @@ declare -r SSHD_RESTART_CMD="/etc/init.d/sshd reload"
 # Ensure previous tunnels with the same ID are not running
 set +e
 pkill -f ${TUNNEL_ID}/server-execute.sh
+if [[ ${?} -eq 0 ]]; then sleep 2; fi
+sudo ip tuntap del mode tun ${NETWORK_DEVICE}
 set -e
 
 # Set up network device

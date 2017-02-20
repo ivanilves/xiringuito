@@ -56,26 +56,15 @@ else
   declare -r LOCAL_TUNNEL_ID=$(./scripts/${KERNEL}/get-local-tunnel-id.sh)
 fi
 
+trap 'exit 130' INT
 trap teardown EXIT
 
 function teardown() {
-  set +e
-  echo "Tearing down tunnel..."
-  if [[ -f /etc/resolv.conf.orig ]]; then
-    sudo cp /etc/resolv.conf.orig /etc/resolv.conf
-  fi
   if [[ ${SSH_PID} ]]; then
-    if [[ ${KERNEL} == linux ]]; then
-      kill ${SSH_PID}
-    else
-      sudo kill ${SSH_PID}
-    fi
+    ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh
+  else
+    sudo ./scripts/${KERNEL}/client-teardown.sh ${$} 0 ${LOCAL_TUNNEL_ID}
   fi
-  if [[ ${KERNEL} == linux ]]; then
-    ./scripts/${KERNEL}/client-teardown.sh ${TUNNEL_ID}
-  fi
-  ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh
-  echo "DONE"
 }
 
 echo "TUNNEL ID: ${TUNNEL_ID} (local: ${LOCAL_TUNNEL_ID})"
@@ -97,6 +86,7 @@ else
 fi
 ${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} &
 SSH_PID=${!}
+sudo ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
 if [[ ${KERNEL} == linux ]]; then
   sleep 3
@@ -115,20 +105,18 @@ for NETWORK in ${NETWORKS}; do
 done
 set -e
 
-if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" && ! "$(grep xiringuito /etc/resolv.conf)" ]]; then
+if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" ]]; then
   echo
   echo "* Will now replace your DNS config with one fetched from the SSH server."
   echo "* Set enviromental variable 'NO_DNS', if you do not want this to happen."
   REMOTE_RESOLV_CONF=$(ssh ${SSH_OPTS} ${SSH_SERVER} cat /etc/resolv.conf | grep -v "[#;]" )
 
-  sudo cp /etc/resolv.conf /etc/resolv.conf.orig
-
   if [[ "${REMOTE_RESOLV_CONF}" =~ nameserver ]]; then
-    echo "--- resolv.conf ---"
-    echo "# Added by xiringuito" | sudo tee /etc/resolv.conf
-    echo "${REMOTE_RESOLV_CONF}" | sudo tee -a /etc/resolv.conf
-    echo "nameserver 8.8.8.8" | sudo tee -a /etc/resolv.conf
-    echo "--- resolv.conf ---"
+    echo "${REMOTE_RESOLV_CONF}" | ./scripts/client-update-resolv-conf.sh
+
+    if [[ ${KERNEL} == darwin ]]; then
+      ./scripts/${KERNEL}/client-update-macosx-dns.sh ${LOCAL_TUNNEL_ID}
+    fi
   fi
 fi
 
