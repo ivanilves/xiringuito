@@ -9,4 +9,10 @@ fi
 
 export AWS_PROFILE=$(echo ${1} | awk -F"." '{print $2}')
 
-aws ec2 describe-subnets | grep CidrBlock\":\ \"10 | awk -F"\"" '{print $4}' | sort | uniq
+VPC_URL='http://169.254.169.254/latest/meta-data/network/interfaces/macs/$(/sbin/ip link show dev eth0 | grep link/ether | awk '"'"'{print $2}'"'"')/vpc-id'
+VPC_ID=$(ssh ${1} curl -s \"${VPC_URL}\")
+if [[ ${?} -eq 0 && -n "${VPC_ID}" ]]; then
+  FILTER_PARAMS="--filters Name=vpc-id,Values=${VPC_ID}"
+fi
+
+aws ec2 describe-subnets ${FILTER_PARAMS} | grep CidrBlock\":\ \"10 | awk -F"\"" '{print "ROUTE:"$4}' | sort | uniq
