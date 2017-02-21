@@ -30,7 +30,7 @@ declare -r SSH_SERVER=${1}; shift
 if [[ ${#} -gt 0 ]]; then
   declare -r NETWORKS=${@}
 elif [[ -x ./discover-routes ]]; then
-  declare -r NETWORKS=$(./discover-routes ${SSH_SERVER})
+  declare -r NETWORKS=$(./discover-routes ${SSH_SERVER} | grep "^ROUTE:" | sed 's/.*://')
 fi
 
 declare -r IP_BASE=192.168.245
