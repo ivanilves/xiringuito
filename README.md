@@ -1,17 +1,17 @@
 # xiringuito
 
-*SSH-based VPN for poors*
+*SSH-based VPN for poors* :wink:
 
-VPN made easy! No configurations. No VPN servers. No hassle. **Just plug and use!**
+VPN made easy! No configuration. No VPN servers. No hassle. **Just plug and use!**
 
-This is the "VPN without VPN" software done using built-in capabilities of SSH.
+This is the "VPN without VPN" software done using nice built-in capabilities of SSH.
 
-## Install
+## Install (just download it)
 ```
 git clone https://github.com/ivanilves/xiringuito.git
 ```
 
-## Use
+## Use (just run it)
 ```
 cd xiringuito
 ./xiringuito user@your.ssh.server 10.0.0.0/8 192.168.0.0/16
