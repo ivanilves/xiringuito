@@ -1,6 +1,6 @@
 # xiringuito
 
-*SSH-based VPN for poors* :wink:
+*SSH-based "VPN for poors"* :wink:
 
 VPN made easy! No configuration. No VPN servers. No hassle. **Just plug and use!**
 
