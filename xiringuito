@@ -23,6 +23,10 @@ if [[ ${#} -lt 1 ]]; then
   exit 1
 fi
 
+cd $(dirname ${0})
+
+./scripts/client-preexec.sh
+
 echo -n "[ sudo check ] "; sudo true; echo
 
 declare -r SSH_SERVER=${1}; shift
@@ -47,8 +51,6 @@ declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
 declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
 
 declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectTimeout=10"
-
-cd $(dirname ${0})
 
 if [[ ${KERNEL} == linux ]]; then
   declare -r LOCAL_TUNNEL_ID=${TUNNEL_ID}
