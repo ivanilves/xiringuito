@@ -121,7 +121,7 @@ fi
 
 set +e
 FAILED_PINGS=0
-while [[ ${FAILED_PINGS} -lt 5 ]]; do
+while [[ ${FAILED_PINGS} -lt 20 ]]; do
   kill -0 ${SSH_PID} &>/dev/null || exit 17
 
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
@@ -132,7 +132,7 @@ while [[ ${FAILED_PINGS} -lt 5 ]]; do
     FAILED_PINGS=0
   fi
 
-  sleep 5
+  sleep 1
 done
 
 teardown
