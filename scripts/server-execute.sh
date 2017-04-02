@@ -2,8 +2,6 @@
 #
 # Execute/teardown on the server side
 #
-set -e
-
 if [[ ${#} != 2 ]]; then
   echo "Usage: ${0} TUNNEL_ID IP_BASE"
   exit 1
@@ -26,6 +24,18 @@ function teardown() {
 }
 
 echo "CONNECTED"
-while true; do
-  sleep 60000 # TODO: Maybe we need some heartbeat here
+
+FAILED_PINGS=0
+while [[ ${FAILED_PINGS} -lt 5 ]]; do
+  ping -c3 -nq ${CLIENT_IP_ADDR} >/dev/null
+  if [[ ${?} -ne 0 ]]; then
+    let FAILED_PINGS+=1
+    logger -i -p warn "xiringuito[${TUNNEL_ID}]: Failed to ping ${CLIENT_IP_ADDR} (${FAILED_PINGS})"
+  else
+    FAILED_PINGS=0
+  fi
+
+  sleep 5
 done
+
+teardown

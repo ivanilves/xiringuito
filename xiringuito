@@ -50,7 +50,7 @@ fi
 declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
 declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
 
-declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectTimeout=10"
+declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectionAttempts=3 -oConnectTimeout=10"
 
 if [[ ${KERNEL} == linux ]]; then
   declare -r LOCAL_TUNNEL_ID=${TUNNEL_ID}
@@ -62,9 +62,7 @@ trap 'exit 130' INT
 trap teardown EXIT
 
 function teardown() {
-  if [[ ${SSH_PID} ]]; then
-    ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh &>/dev/null &
-  else
+  if [[ ! ${SSH_PID} ]]; then
     sudo ./scripts/${KERNEL}/client-teardown.sh ${$} 0 ${LOCAL_TUNNEL_ID}
   fi
 }
@@ -122,13 +120,17 @@ if [[ ! ${NO_DNS} && ! -z "${NETWORKS}" ]]; then
 fi
 
 set +e
-while true; do
-  if [[ ! ${NO_PING} ]]; then
-    ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
-    if [[ ${?} -ne 0 ]]; then
-      echo "* Failed to ping server-side tunnel endpoint..."
-    fi
+FAILED_PINGS=0
+while [[ ${FAILED_PINGS} -lt 5 ]]; do
+  ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
+  if [[ ${?} -ne 0 ]]; then
+    let FAILED_PINGS+=1
+    echo "* Failed to ping server-side tunnel endpoint... (${FAILED_PINGS})"
+  else
+    FAILED_PINGS=0
   fi
 
   sleep 5
 done
+
+teardown
