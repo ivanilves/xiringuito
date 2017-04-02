@@ -23,7 +23,7 @@ if [[ -f /etc/resolv.conf.orig ]]; then
 fi
 
 if [[ ${SSH_PID} -ne 0 ]]; then
-  kill ${SSH_PID}; sleep 1
+  kill ${SSH_PID} &>/dev/null; sleep 1
 fi
 
 ip tuntap del mode tun tun${TUNNEL_ID}

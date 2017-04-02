@@ -62,9 +62,7 @@ trap 'exit 130' INT
 trap teardown EXIT
 
 function teardown() {
-  if [[ ${SSH_PID} ]]; then
-    ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh &>/dev/null &
-  else
+  if [[ ! ${SSH_PID} ]]; then
     sudo ./scripts/${KERNEL}/client-teardown.sh ${$} 0 ${LOCAL_TUNNEL_ID}
   fi
 }
