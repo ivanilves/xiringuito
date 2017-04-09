@@ -37,13 +37,16 @@ fi
 declare -r ORIGINAL_EXEC=${0}
 declare -r ORIGINAL_ARGS=${@}
 
-while getopts "RDh" o; do
+while getopts "RDrh" o; do
   case ${o} in
     R)
       NO_RECONNECT=true
       ;;
     D)
       NO_DNS=true
+      ;;
+    r)
+      RECONNECTING=true
       ;;
     h)
       print_help
@@ -133,8 +136,8 @@ fi
 
 set +e
 for NETWORK in ${NETWORKS}; do
-   echo "> ROUTE: ${NETWORK}"
-  ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
+  echo "> ROUTE: ${NETWORK}"
+  [[ -z "${RECONNECTING}" ]] && ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
 done
 set -e
 
@@ -172,5 +175,5 @@ done
 teardown
 
 if [[ -z "${NO_RECONNECT}" ]]; then
-  exec ${ORIGINAL_EXEC} ${ORIGINAL_ARGS}
+  exec ${ORIGINAL_EXEC} -r ${ORIGINAL_ARGS}
 fi
