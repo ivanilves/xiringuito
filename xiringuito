@@ -33,6 +33,10 @@ if [[ ${#} -lt 1 ]]; then
   exit 1
 fi
 
+# We need to save executable path and arguments for reconnection functionality
+declare -r ORIGINAL_EXEC=${0}
+declare -r ORIGINAL_ARGS=${@}
+
 while getopts "RDh" o; do
   case ${o} in
     R)
@@ -151,8 +155,8 @@ fi
 
 set +e
 FAILED_PINGS=0
-while [[ ${FAILED_PINGS} -lt 20 ]]; do
-  kill -0 ${SSH_PID} &>/dev/null || exit 17
+while [[ ${FAILED_PINGS} -lt 10 ]]; do
+  kill -0 ${SSH_PID} &>/dev/null || break
 
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
   if [[ ${?} -ne 0 ]]; then
@@ -166,3 +170,7 @@ while [[ ${FAILED_PINGS} -lt 20 ]]; do
 done
 
 teardown
+
+if [[ -z "${NO_RECONNECT}" ]]; then
+  exec ${ORIGINAL_EXEC} ${ORIGINAL_ARGS}
+fi

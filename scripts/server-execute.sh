@@ -26,7 +26,7 @@ function teardown() {
 echo "CONNECTED"
 
 FAILED_PINGS=0
-while [[ ${FAILED_PINGS} -lt 20 ]]; do
+while [[ ${FAILED_PINGS} -lt 10 ]]; do
   ping -c3 -nq ${CLIENT_IP_ADDR} >/dev/null
   if [[ ${?} -ne 0 ]]; then
     let FAILED_PINGS+=1
