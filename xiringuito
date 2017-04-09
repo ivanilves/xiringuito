@@ -4,6 +4,16 @@
 #
 set -e
 
+function print_help() {
+  echo "Usage: ${0} [OPTIONS] [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
+  echo
+  echo "OPTIONS"
+  echo "-R    do not reconnect after connection failure"
+  echo "-D    do not fetch DNS config from server"
+  echo "-h    show this extremely helpful message"
+  echo
+}
+
 declare -r KERNEL=$(uname -s | tr [A-Z] [a-z])
 if [[ ${KERNEL} != linux && ${KERNEL} != darwin ]]; then
   echo "Unsupported system: ${KERNEL}"
@@ -19,9 +29,29 @@ if [[ ${KERNEL} == darwin ]]; then
 fi
 
 if [[ ${#} -lt 1 ]]; then
-  echo "Usage: ${0} [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
+  print_help
   exit 1
 fi
+
+while getopts "RDh" o; do
+  case ${o} in
+    R)
+      NO_RECONNECT=true
+      ;;
+    D)
+      NO_DNS=true
+      ;;
+    h)
+      print_help
+      exit 0
+      ;;
+    *)
+      print_help
+      exit 1
+  esac
+done
+
+shift $((OPTIND-1))
 
 cd $(dirname ${0})
 
