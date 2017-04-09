@@ -4,6 +4,16 @@
 #
 set -e
 
+function print_help() {
+  echo "Usage: ${0} [OPTIONS] [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
+  echo
+  echo "OPTIONS"
+  echo "-R    do not reconnect after connection failure"
+  echo "-D    do not fetch DNS config from server"
+  echo "-h    show this extremely helpful message"
+  echo
+}
+
 declare -r KERNEL=$(uname -s | tr [A-Z] [a-z])
 if [[ ${KERNEL} != linux && ${KERNEL} != darwin ]]; then
   echo "Unsupported system: ${KERNEL}"
@@ -19,9 +29,36 @@ if [[ ${KERNEL} == darwin ]]; then
 fi
 
 if [[ ${#} -lt 1 ]]; then
-  echo "Usage: ${0} [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
+  print_help
   exit 1
 fi
+
+# We need to save executable path and arguments for reconnection functionality
+declare -r ORIGINAL_EXEC=${0}
+declare -r ORIGINAL_ARGS=${@}
+
+while getopts "RDrh" o; do
+  case ${o} in
+    R)
+      NO_RECONNECT=true
+      ;;
+    D)
+      NO_DNS=true
+      ;;
+    r)
+      RECONNECTING=true
+      ;;
+    h)
+      print_help
+      exit 0
+      ;;
+    *)
+      print_help
+      exit 1
+  esac
+done
+
+shift $((OPTIND-1))
 
 cd $(dirname ${0})
 
@@ -99,8 +136,8 @@ fi
 
 set +e
 for NETWORK in ${NETWORKS}; do
-   echo "> ROUTE: ${NETWORK}"
-  ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
+  echo "> ROUTE: ${NETWORK}"
+  [[ -z "${RECONNECTING}" ]] && ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
 done
 set -e
 
@@ -121,8 +158,8 @@ fi
 
 set +e
 FAILED_PINGS=0
-while [[ ${FAILED_PINGS} -lt 20 ]]; do
-  kill -0 ${SSH_PID} &>/dev/null || exit 17
+while [[ ${FAILED_PINGS} -lt 10 ]]; do
+  kill -0 ${SSH_PID} &>/dev/null || break
 
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
   if [[ ${?} -ne 0 ]]; then
@@ -136,3 +173,7 @@ while [[ ${FAILED_PINGS} -lt 20 ]]; do
 done
 
 teardown
+
+if [[ -z "${NO_RECONNECT}" ]]; then
+  exec ${ORIGINAL_EXEC} -r ${ORIGINAL_ARGS}
+fi
