@@ -8,6 +8,7 @@ function print_help() {
   echo "Usage: ${0} [OPTIONS] [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
   echo
   echo "OPTIONS"
+  echo "-f X  fail connection after X ping failures"
   echo "-R    do not reconnect after connection failure"
   echo "-D    do not fetch DNS config from server"
   echo "-h    show this extremely helpful message"
@@ -37,8 +38,19 @@ fi
 declare -r ORIGINAL_EXEC=${0}
 declare -r ORIGINAL_ARGS=${@}
 
-while getopts "RDrh" o; do
+while getopts "f:RDrh" o; do
   case ${o} in
+    f)
+      MAX_FAILED_PINGS=${OPTARG}
+      if [[ ! ${MAX_FAILED_PINGS} =~ ^[0-9]{1,}$ ]]; then
+        echo "'-f' option accepts only positive integer values"
+        exit 1
+      fi
+      if [[ ${MAX_FAILED_PINGS} -eq 0 ]]; then
+        echo "'-f' option value should be greater then zero"
+        exit 1
+      fi
+      ;;
     R)
       NO_RECONNECT=true
       ;;
@@ -57,6 +69,8 @@ while getopts "RDrh" o; do
       exit 1
   esac
 done
+
+declare -r MAX_FAILED_PINGS=${MAX_FAILED_PINGS-10}
 
 shift $((OPTIND-1))
 
@@ -124,7 +138,7 @@ if [[ ${KERNEL} == linux ]]; then
 else
   SSH_TUNNEL_CMD="sudo -E ssh"
 fi
-${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} &
+${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} ${MAX_FAILED_PINGS} &
 SSH_PID=${!}
 sudo ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
@@ -158,13 +172,13 @@ fi
 
 set +e
 FAILED_PINGS=0
-while [[ ${FAILED_PINGS} -lt 10 ]]; do
+while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
   kill -0 ${SSH_PID} &>/dev/null || break
 
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
   if [[ ${?} -ne 0 ]]; then
     let FAILED_PINGS+=1
-    echo "* Failed to ping server-side tunnel endpoint... (${FAILED_PINGS})"
+    echo "* Failed to ping server-side tunnel endpoint... (${FAILED_PINGS}/${MAX_FAILED_PINGS})"
   else
     FAILED_PINGS=0
   fi
