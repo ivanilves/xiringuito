@@ -2,13 +2,14 @@
 #
 # Execute/teardown on the server side
 #
-if [[ ${#} != 2 ]]; then
-  echo "Usage: ${0} TUNNEL_ID IP_BASE"
+if [[ ${#} != 3 ]]; then
+  echo "Usage: ${0} TUNNEL_ID IP_BASE MAX_FAILED_PINGS"
   exit 1
 fi
 
 declare -r TUNNEL_ID=${1}
 declare -r IP_BASE=${2}
+declare -r MAX_FAILED_PINGS=${3}
 
 declare -r NETWORK_DEVICE=tun${TUNNEL_ID}
 let CLIENT_LAST_IP_ADDR_OCTET="4*(${TUNNEL_ID}-1)+1"
@@ -26,11 +27,11 @@ function teardown() {
 echo "CONNECTED"
 
 FAILED_PINGS=0
-while [[ ${FAILED_PINGS} -lt 10 ]]; do
+while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
   ping -c3 -nq ${CLIENT_IP_ADDR} >/dev/null
   if [[ ${?} -ne 0 ]]; then
     let FAILED_PINGS+=1
-    logger -i -p warn "xiringuito[${TUNNEL_ID}]: Failed to ping ${CLIENT_IP_ADDR} (${FAILED_PINGS})"
+    logger -i -p warn "xiringuito[${TUNNEL_ID}]: Failed to ping ${CLIENT_IP_ADDR} (${FAILED_PINGS}/${MAX_FAILED_PINGS})"
   else
     FAILED_PINGS=0
   fi
