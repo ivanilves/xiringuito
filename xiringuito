@@ -42,8 +42,12 @@ while getopts "f:RDrh" o; do
   case ${o} in
     f)
       MAX_FAILED_PINGS=${OPTARG}
-      if [[ ! ${MAX_FAILED_PINGS} =~ [0-9]{1,} ]]; then
-        echo "'-f' option accepts only integer values"
+      if [[ ! ${MAX_FAILED_PINGS} =~ ^[0-9]{1,}$ ]]; then
+        echo "'-f' option accepts only positive integer values"
+        exit 1
+      fi
+      if [[ ${MAX_FAILED_PINGS} -eq 0 ]]; then
+        echo "'-f' option value should be greater then zero"
         exit 1
       fi
       ;;
