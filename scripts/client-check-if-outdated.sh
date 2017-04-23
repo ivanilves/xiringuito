@@ -6,8 +6,8 @@ set -e
 
 git remote update >/dev/null
 
-REMOTE_TS=$(git show --pretty="format:%ct" origin master)
-LOCAL_TS=$(git show --pretty="format:%ct")
+REMOTE_TS=$(git show --pretty="format:%ct" origin/master | head -n1)
+LOCAL_TS=$(git show --pretty="format:%ct" | head -n1)
 
 if [[ ${LOCAL_TS} -lt ${REMOTE_TS} ]]; then
   echo "*** WARNING: You are running outdated Xiringuito version. Remember: 'git pull' FTW!"

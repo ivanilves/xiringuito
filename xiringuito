@@ -39,7 +39,7 @@ fi
 declare -r ORIGINAL_EXEC=${0}
 declare -r ORIGINAL_ARGS=${@}
 
-while getopts "f:RDrh" o; do
+while getopts "f:CRDrh" o; do
   case ${o} in
     f)
       MAX_FAILED_PINGS=${OPTARG}
