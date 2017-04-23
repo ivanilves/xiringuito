@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# Check, if we are behind the latest master (and warn if we are)
+# Check, if we are behind the latest master (and warn, if we are)
+# NB! This is a very unusual script, if it fails, nothing breaks!
 #
 set -e
 
