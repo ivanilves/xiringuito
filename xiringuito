@@ -9,6 +9,7 @@ function print_help() {
   echo
   echo "OPTIONS"
   echo "-f X  fail connection after X ping failures"
+  echo "-C    do not check if we run outdated app version"
   echo "-R    do not reconnect after connection failure"
   echo "-D    do not fetch DNS config from server"
   echo "-h    show this extremely helpful message"
@@ -51,6 +52,9 @@ while getopts "f:RDrh" o; do
         exit 1
       fi
       ;;
+    C)
+      DONT_CHECK_IF_OUTDATED=true
+      ;;
     R)
       NO_RECONNECT=true
       ;;
@@ -69,6 +73,10 @@ while getopts "f:RDrh" o; do
       exit 1
   esac
 done
+
+if [[ ! ${DONT_CHECK_IF_OUTDATED} ]]; then
+  ./scripts/client-check-if-outdated.sh 2>/dev/null &
+fi
 
 declare -r MAX_FAILED_PINGS=${MAX_FAILED_PINGS-10}
 
