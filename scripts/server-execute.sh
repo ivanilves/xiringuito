@@ -15,6 +15,10 @@ declare -r NETWORK_DEVICE=tun${TUNNEL_ID}
 let CLIENT_LAST_IP_ADDR_OCTET="4*(${TUNNEL_ID}-1)+1"
 declare -r CLIENT_IP_ADDR=${IP_BASE}.${CLIENT_LAST_IP_ADDR_OCTET}
 
+if [[ ! $(echo "${PATH}" | egrep "(^|:)/sbin($|:)") ]]; then
+  export PATH="/sbin:${PATH}"
+fi
+
 trap teardown EXIT
 
 function teardown() {

@@ -20,6 +20,10 @@ declare -r SERVER_IP_ADDR=${IP_BASE}.${SERVER_LAST_IP_ADDR_OCTET}
 
 declare -r SSHD_CONFIG_FILE=/etc/ssh/sshd_config
 
+if [[ ! $(echo "${PATH}" | egrep "(^|:)/sbin($|:)") ]]; then
+  export PATH="/sbin:${PATH}"
+fi
+
 if [[ -x /bin/systemctl && -f /lib/systemd/system/ssh.service ]]; then
   declare -r SSHD_RESTART_CMD="systemctl reload ssh"
 elif [[ -f /etc/init/ssh.conf ]]; then
