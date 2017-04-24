@@ -38,13 +38,17 @@ fi
 set +e
 pkill -f ${TUNNEL_ID}/server-execute.sh
 if [[ ${?} -eq 0 ]]; then sleep 2; fi
-sudo ip tuntap del mode tun ${NETWORK_DEVICE}
+sudo ip tuntap del mode tun ${NETWORK_DEVICE} || sudo /usr/sbin/tunctl -d ${NETWORK_DEVICE}
 set -e
 
 # Set up network device
 if [[ ! $(sudo ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
   sudo modprobe tun
-  sudo ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE}
+
+  set +e
+  sudo ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE} || sudo /usr/sbin/tunctl -u ${USER} -t ${NETWORK_DEVICE}
+  set -e
+
   sudo ip link set ${NETWORK_DEVICE} up
   sudo ip addr add ${SERVER_IP_ADDR}/32 peer ${CLIENT_IP_ADDR} dev ${NETWORK_DEVICE}
 fi
