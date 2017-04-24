@@ -36,6 +36,7 @@ if [[ ${#} -lt 1 ]]; then
 fi
 
 # We need to save executable path and arguments for reconnection functionality
+export PATH="${PATH}:."
 declare -r ORIGINAL_EXEC=${0}
 declare -r ORIGINAL_ARGS=${@}
 

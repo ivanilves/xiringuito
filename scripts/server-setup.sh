@@ -38,19 +38,33 @@ fi
 set +e
 pkill -f ${TUNNEL_ID}/server-execute.sh
 if [[ ${?} -eq 0 ]]; then sleep 2; fi
-sudo ip tuntap del mode tun ${NETWORK_DEVICE}
+[[ ! -x /usr/sbin/tunctl ]] && sudo ip tuntap del mode tun ${NETWORK_DEVICE} || sudo /usr/sbin/tunctl -d ${NETWORK_DEVICE}
 set -e
 
 # Set up network device
 if [[ ! $(sudo ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
   sudo modprobe tun
-  sudo ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE}
+
+  if [[ ! -x /usr/sbin/tunctl ]]; then
+    set +e
+    sudo ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE}
+    if [[ ${?} -ne 0 ]]; then
+      echo "NB! Failed to add tunX device on the server side!"
+      echo "NB! Either you have old or not operational 'iproute2' package installed. :-|"
+      echo "NB! If you run old distribution, maybe you need to install 'tunctl' package."
+      exit 39
+    fi
+    set -e
+  else
+    sudo /usr/sbin/tunctl -u ${USER} -t ${NETWORK_DEVICE}
+  fi
+
   sudo ip link set ${NETWORK_DEVICE} up
   sudo ip addr add ${SERVER_IP_ADDR}/32 peer ${CLIENT_IP_ADDR} dev ${NETWORK_DEVICE}
 fi
 
 # Set up SSH server for tunneling
-if [[ ! $(grep "^PermitTunnel yes" ${SSHD_CONFIG_FILE}) ]]; then
+if [[ ! $(sudo grep "^PermitTunnel yes" ${SSHD_CONFIG_FILE}) ]]; then
   echo "PermitTunnel yes" | sudo tee -a ${SSHD_CONFIG_FILE}
   sudo ${SSHD_RESTART_CMD}
 fi
