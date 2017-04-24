@@ -182,7 +182,7 @@ fi
 set +e
 FAILED_PINGS=0
 while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
-  kill -0 ${SSH_PID} &>/dev/null || break
+  [[ $(ps -p ${SSH_PID} | wc -l) -eq 2 ]] || break
 
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
   if [[ ${?} -ne 0 ]]; then
