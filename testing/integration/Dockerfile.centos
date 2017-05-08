@@ -1,0 +1,9 @@
+FROM centos:7
+
+LABEL maintainer "ivan.ilves@gmail.com"
+
+RUN yum -y install openssh-server && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa && yum clean all
+
+ADD ./ssh-keys /root/.ssh
+
+CMD ["/usr/sbin/sshd", "-De"]

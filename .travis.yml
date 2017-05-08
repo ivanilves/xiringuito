@@ -1,0 +1,26 @@
+notifications:
+  email: false
+
+sudo: required
+
+services:
+  - docker
+
+env:
+  global:
+    - DOCKER_REPO=ivanilves
+
+install:
+  - docker pull ${DOCKER_REPO}/xiri-ubuntu
+  - docker pull ${DOCKER_REPO}/xiri-centos
+
+before_script:
+  - chmod -R go-rwx testing/integration/ssh-keys
+
+script:
+  - testing/integration.sh zero
+  - testing/integration.sh basic_connectivity_with_ssh
+
+branches:
+  except:
+    - /^skip-ci/
