@@ -1,0 +1,9 @@
+FROM ubuntu:16.04
+
+LABEL maintainer "ivan.ilves@gmail.com"
+
+RUN apt-get update && apt-get --yes install openssh-server && mkdir /var/run/sshd && apt-get clean
+
+ADD ./ssh-keys /root/.ssh
+
+CMD ["/usr/sbin/sshd", "-De"]
