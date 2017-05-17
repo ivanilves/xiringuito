@@ -15,10 +15,10 @@ docker-push:
 	docker push $(IMAGE)
 
 docker-start:
-	docker run -d --name $(NAME) $(IMAGE)
+	docker run --cap-add=NET_ADMIN --device=/dev/net/tun -d --name $(NAME) $(IMAGE)
 
 docker-bash:
-	docker run -ti --name $(NAME) --rm $(IMAGE) bash
+	docker run --cap-add=NET_ADMIN --device=/dev/net/tun -ti --name $(NAME) --rm $(IMAGE) bash
 
 docker-logs:
 	docker logs $(NAME)
