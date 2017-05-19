@@ -19,6 +19,7 @@ script:
   - testing/integration.sh basic_connectivity_with_ssh
   - testing/integration.sh connect_with_ssh_agent
   - testing/integration.sh connect_with_ssh_key
+  - testing/integration.sh do_client_teardown
 
 branches:
   only:

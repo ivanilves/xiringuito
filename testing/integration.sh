@@ -17,11 +17,17 @@ function setup(){
   done
 }
 
+function complain(){
+  echo -e "\033[1;31m>>> ${@}\033[0m"
+}
+
 function run_case(){
   declare -r CASE=${1}
 
   declare -r XIRI_EXE=../../xiringuito
   declare -r SSH_USER=root
+
+  eval `ssh-agent -s`; ssh-add ssh-keys/id_rsa
 
   for DIST in ${DISTS}; do
     echo
@@ -34,9 +40,11 @@ function run_case(){
     export LANG=C
     export LC_ALL=C
 
+    [[ ${DEBUG} ]] && set -x
     set -e
     source cases/${1}.sh
     set +e
+    [[ ${DEBUG} ]] && set +x
   done
 }
 
@@ -49,10 +57,13 @@ function teardown(){
     make docker-rm DIST=${DIST}
   done
 
+  kill ${SSH_AGENT_PID}
+
   if [[ "${SUCCESS}" == "true" ]]; then
     echo
     echo -e "\033[0;32m[ OK ]\033[0m"
     echo
+    sleep 1
     exit 0
   fi
 
@@ -64,6 +75,8 @@ function teardown(){
 
 if [[ ${#} != 1 ]]; then
   echo "Usage: $(basename ${0}) CASE"
+  echo
+  echo "HINT: Set 'DEBUG' environment variable to see case execution trace."
   echo
   echo "Available integration testing cases:"
   echo "${CASES}"
