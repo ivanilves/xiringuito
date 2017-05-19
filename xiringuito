@@ -12,6 +12,7 @@ function print_help() {
   echo "-C    do not check if we run outdated app version"
   echo "-R    do not reconnect after connection failure"
   echo "-D    do not fetch DNS config from server"
+  echo "-X    do not run route discovery"
   echo "-h    show this extremely helpful message"
   echo
 }
@@ -40,7 +41,7 @@ export PATH="${PATH}:."
 declare -r ORIGINAL_EXEC=${0}
 declare -r ORIGINAL_ARGS=${@}
 
-while getopts "f:CRDrh" o; do
+while getopts "f:CRDXrh" o; do
   case ${o} in
     f)
       MAX_FAILED_PINGS=${OPTARG}
@@ -61,6 +62,9 @@ while getopts "f:CRDrh" o; do
       ;;
     D)
       NO_DNS=true
+      ;;
+    X)
+      NO_ROUTE_DISCOVERY=true
       ;;
     r)
       RECONNECTING=true
@@ -93,7 +97,7 @@ declare -r SSH_SERVER=${1}; shift
 
 if [[ ${#} -gt 0 ]]; then
   declare -r NETWORKS=${@}
-elif [[ -x ./discover-routes ]]; then
+elif [[ -x ./discover-routes && ! ${NO_ROUTE_DISCOVERY} ]]; then
   declare -r NETWORKS=$(./discover-routes ${SSH_SERVER} | grep "^ROUTE:" | sed 's/.*://')
 fi
 
@@ -149,7 +153,7 @@ else
 fi
 ${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} ${MAX_FAILED_PINGS} &
 SSH_PID=${!}
-sudo ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
+sudo -E ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
 sleep 5
 
@@ -183,6 +187,10 @@ set +e
 FAILED_PINGS=0
 while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
   [[ $(ps -p ${SSH_PID} | wc -l) -eq 2 ]] || break
+
+  if [[ ${EXIT_AFTER_CONNECT} ]]; then
+    exit 0
+  fi
 
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
   if [[ ${?} -ne 0 ]]; then

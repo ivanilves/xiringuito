@@ -14,13 +14,12 @@ install:
   - docker pull ${DOCKER_REPO}/xiri-ubuntu
   - docker pull ${DOCKER_REPO}/xiri-centos
 
-before_script:
-  - chmod -R go-rwx testing/integration/ssh-keys
-
 script:
   - testing/integration.sh zero
   - testing/integration.sh basic_connectivity_with_ssh
+  - testing/integration.sh connect_with_ssh_agent
+  - testing/integration.sh connect_with_ssh_key
 
 branches:
-  except:
-    - /^skip-ci/
+  only:
+    - master
