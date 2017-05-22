@@ -15,4 +15,4 @@ declare -r IP_BASE=${2}
 let SERVER_LAST_IP_ADDR_OCTET="4*(${TUNNEL_ID}-1)+2"
 declare -r SERVER_IP_ADDR=${IP_BASE}.${SERVER_LAST_IP_ADDR_OCTET}
 
-ping -c1 -nq ${SERVER_IP_ADDR} >/dev/null
+ping -W3 -c1 -nq ${SERVER_IP_ADDR} >/dev/null

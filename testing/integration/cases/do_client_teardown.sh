@@ -2,16 +2,19 @@ function get_client_links(){
   ip link | egrep "tun[0-9]{1,2}" | cut -f2 -d' ' | tr '\n' ' '
 }
 
+INIT_DELAY=2
+DOWN_DELAY=2
+
 ORIG_LINKS=$(get_client_links)
 
 ${XIRI_EXE} -X -R ${SSH_USER}@${REMOTE_IP} &
-XIRI_PID=${!}; sleep 2
+XIRI_PID=${!}; sleep ${INIT_DELAY}
 NEW_LINKS=$(get_client_links)
 
-kill ${XIRI_PID}; sleep 2
+kill ${XIRI_PID}; sleep ${DOWN_DELAY}
 if [[ $(ps -p ${XIRI_PID} | wc -l) -eq 2 ]]; then
   kill -9 ${XIRI_PID} &>/dev/null
-  sleep 2
+  sleep ${DOWN_DELAY}
 fi
 FINAL_LINKS=$(get_client_links)
 

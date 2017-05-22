@@ -32,7 +32,7 @@ echo "CONNECTED"
 
 FAILED_PINGS=0
 while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
-  ping -c3 -nq ${CLIENT_IP_ADDR} >/dev/null
+  ping -W3 -c1 -nq ${CLIENT_IP_ADDR} >/dev/null
   if [[ ${?} -ne 0 ]]; then
     let FAILED_PINGS+=1
     logger -i -p warn "xiringuito[${TUNNEL_ID}]: Failed to ping ${CLIENT_IP_ADDR} (${FAILED_PINGS}/${MAX_FAILED_PINGS})"

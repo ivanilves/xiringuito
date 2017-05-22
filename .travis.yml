@@ -15,11 +15,12 @@ install:
   - docker pull ${DOCKER_REPO}/xiri-centos
 
 script:
-  - testing/integration.sh zero
-  - testing/integration.sh basic_connectivity_with_ssh
-  - testing/integration.sh connect_with_ssh_agent
-  - testing/integration.sh connect_with_ssh_key
-  - testing/integration.sh do_client_teardown
+  - testing/run_integration_case.sh zero
+  - testing/run_integration_case.sh basic_connectivity_with_ssh
+  - testing/run_integration_case.sh connect_with_ssh_agent
+  - testing/run_integration_case.sh connect_with_ssh_key
+  - testing/run_integration_case.sh do_client_teardown
+  - testing/run_integration_case.sh do_server_teardown
 
 branches:
   only:
