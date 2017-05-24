@@ -21,6 +21,7 @@ script:
   - testing/run_integration_case.sh connect_with_ssh_key
   - testing/run_integration_case.sh do_client_teardown
   - testing/run_integration_case.sh do_server_teardown
+  - testing/run_integration_case.sh run_with_dns_propagation
 
 branches:
   only:

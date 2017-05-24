@@ -17,6 +17,22 @@ function setup(){
   done
 }
 
+function kill_reliably(){
+  local TARGET_PID=${1}
+  local CHECK_DELAY=${2}
+
+  kill ${TARGET_PID}
+  sleep ${CHECK_DELAY}
+  if [[ $(ps -p ${TARGET_PID} | wc -l) -eq 2 ]]; then
+    kill -9 ${TARGET_PID} &>/dev/null
+    sleep ${CHECK_DELAY}
+  fi
+}
+
+function warn(){
+  echo -e "\033[1;33m${@}\033[0m"
+}
+
 function complain(){
   echo -e "\033[1;31m>>> ${@}\033[0m"
 }

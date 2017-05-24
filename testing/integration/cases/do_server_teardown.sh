@@ -12,11 +12,7 @@ ${XIRI_EXE} -f 1 -X -R ${SSH_USER}@${REMOTE_IP} &
 XIRI_PID=${!}; sleep ${INIT_DELAY}
 NEW_LINKS=$(get_server_links)
 
-kill ${XIRI_PID}; sleep ${DOWN_DELAY}
-if [[ $(ps -p ${XIRI_PID} | wc -l) -eq 2 ]]; then
-  kill -9 ${XIRI_PID} &>/dev/null
-  sleep ${DOWN_DELAY}
-fi
+kill_reliably ${XIRI_PID} ${DOWN_DELAY}
 
 FINAL_LINKS=$(get_server_links)
 
