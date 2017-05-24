@@ -22,6 +22,7 @@ script:
   - testing/run_integration_case.sh do_client_teardown
   - testing/run_integration_case.sh do_server_teardown
   - testing/run_integration_case.sh run_with_dns_propagation
+  - testing/run_integration_case.sh run_without_dns_propagation
 
 branches:
   only:

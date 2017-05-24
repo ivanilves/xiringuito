@@ -30,7 +30,13 @@ function kill_reliably(){
 }
 
 function warn(){
-  echo -e "\033[1;33m${@}\033[0m"
+  local LC=$(echo "${@}" | wc -l)
+  local CL=1
+
+  while [[ ${CL} -le ${LC} ]]; do
+    echo -e "\033[1;33m$(echo "${@}" | head -n${CL} | tail -n1)\033[0m"
+    let CL+=1
+  done
 }
 
 function complain(){
