@@ -46,7 +46,9 @@ function complain(){
 function run_case(){
   declare -r CASE=${1}
 
-  declare -r XIRI_EXE=../../xiringuito
+  pushd ../.. >/dev/null; WD=${PWD}; popd >/dev/null
+
+  declare -r XIRI_EXE=${WD}/xiringuito
   declare -r SSH_USER=root
 
   eval `ssh-agent -s`; ssh-add ssh-keys/id_rsa
