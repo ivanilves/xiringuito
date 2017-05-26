@@ -24,6 +24,7 @@ script:
   - testing/run_integration_case.sh run_with_dns_propagation
   - testing/run_integration_case.sh run_without_dns_propagation
   - testing/run_integration_case.sh run_with_reconnection
+  - testing/run_integration_case.sh run_without_reconnection
 
 branches:
   only:
