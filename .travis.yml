@@ -26,6 +26,7 @@ script:
   - testing/run_integration_case.sh run_with_reconnection
   - testing/run_integration_case.sh run_without_reconnection
   - testing/run_integration_case.sh run_with_route_discovery
+  - testing/run_integration_case.sh run_without_route_discovery
 
 branches:
   only:
