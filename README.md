@@ -38,3 +38,6 @@ As long as your routes do not overlap, you can run as many `xiringuito` tunnels 
 "xiringuito" is a Catalan way of saying popular Spanish word "chiringuito", which usually means a beach bar in a more or less provisional building. As long as such places usually stand on a loose surface, operate without license and work only with cash, in urban dictionary "chiringuito" could mean any dodgy business, any activity of questional legality and confidence. I've picked up this name because I've wrote this as a quick temporary hack, partially in a bus, partially in a train, while travelling back and forth between job and home. But ... nothing is more permanent than the temporary, right? :smile:
 
 <img src="xiringuito.png" width="256px" />
+
+## Future?
+Before, due to lack of testing, we had some complications with adding new features and changing xiringuito behavior, but since [this PR](https://github.com/ivanilves/xiringuito/pull/32) was merged, we are covered and will bravely proceed with addressing [issues](https://github.com/ivanilves/xiringuito/issues) and any challenges on our way. 
