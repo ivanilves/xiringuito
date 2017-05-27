@@ -17,11 +17,41 @@ function setup(){
   done
 }
 
+function kill_reliably(){
+  local TARGET_PID=${1}
+  local CHECK_DELAY=${2}
+
+  kill ${TARGET_PID}
+  sleep ${CHECK_DELAY}
+  if [[ $(ps -p ${TARGET_PID} | wc -l) -eq 2 ]]; then
+    kill -9 ${TARGET_PID} &>/dev/null
+    sleep ${CHECK_DELAY}
+  fi
+}
+
+function warn(){
+  local LC=$(echo "${@}" | wc -l)
+  local CL=1
+
+  while [[ ${CL} -le ${LC} ]]; do
+    echo -e "\033[1;33m$(echo "${@}" | head -n${CL} | tail -n1)\033[0m"
+    let CL+=1
+  done
+}
+
+function complain(){
+  echo -e "\033[1;31m>>> ${@}\033[0m"
+}
+
 function run_case(){
   declare -r CASE=${1}
 
-  declare -r XIRI_EXE=../../xiringuito
+  pushd ../.. >/dev/null; WD=${PWD}; popd >/dev/null
+
+  declare -r XIRI_EXE=${WD}/xiringuito
   declare -r SSH_USER=root
+
+  eval `ssh-agent -s`; ssh-add ssh-keys/id_rsa
 
   for DIST in ${DISTS}; do
     echo
@@ -34,9 +64,11 @@ function run_case(){
     export LANG=C
     export LC_ALL=C
 
+    [[ ${DEBUG} ]] && set -x
     set -e
     source cases/${1}.sh
     set +e
+    [[ ${DEBUG} ]] && set +x
   done
 }
 
@@ -49,10 +81,13 @@ function teardown(){
     make docker-rm DIST=${DIST}
   done
 
+  kill ${SSH_AGENT_PID}
+
   if [[ "${SUCCESS}" == "true" ]]; then
     echo
     echo -e "\033[0;32m[ OK ]\033[0m"
     echo
+    sleep 1
     exit 0
   fi
 
@@ -64,6 +99,8 @@ function teardown(){
 
 if [[ ${#} != 1 ]]; then
   echo "Usage: $(basename ${0}) CASE"
+  echo
+  echo "HINT: Set 'DEBUG' environment variable to see case execution trace."
   echo
   echo "Available integration testing cases:"
   echo "${CASES}"
