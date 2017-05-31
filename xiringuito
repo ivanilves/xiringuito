@@ -8,7 +8,9 @@ function print_help() {
   echo "Usage: ${0} [OPTIONS] [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
   echo
   echo "OPTIONS"
-  echo "-f X  fail connection after X ping failures"
+  echo "-k PRIVATE_KEY_PATH    use specific SSH private key"
+  echo "-f MAX_FAILED_PINGS    fail connection after X ping failures"
+  echo
   echo "-C    do not check if we run outdated app version"
   echo "-R    do not reconnect after connection failure"
   echo "-D    do not fetch DNS config from server"
@@ -41,8 +43,17 @@ export PATH="${PATH}:."
 declare -r ORIGINAL_EXEC=${0}
 declare -r ORIGINAL_ARGS=${@}
 
-while getopts "f:CRDXrh" o; do
+while getopts "k:f:CRDXrh" o; do
   case ${o} in
+    k)
+      PRIVATE_KEY_PATH=${OPTARG}
+      if [[ ! -f "${PRIVATE_KEY_PATH}" ]]; then
+        echo "Key file does not exist: ${PRIVATE_KEY_PATH}"
+        exit 1
+      fi
+      unset SSH_AUTH_SOCK
+      SSH_PRIVATE_KEY_OPTS="-i ${PRIVATE_KEY_PATH}"
+      ;;
     f)
       MAX_FAILED_PINGS=${OPTARG}
       if [[ ! ${MAX_FAILED_PINGS} =~ ^[0-9]{1,}$ ]]; then
@@ -114,7 +125,7 @@ fi
 declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
 declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
 
-declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectionAttempts=3 -oConnectTimeout=10 ${SSH_EXTRA_OPTS}"
+declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectionAttempts=3 -oConnectTimeout=10 ${SSH_PRIVATE_KEY_OPTS} ${SSH_EXTRA_OPTS}"
 
 if [[ ${KERNEL} == linux ]]; then
   declare -r LOCAL_TUNNEL_ID=${TUNNEL_ID}
