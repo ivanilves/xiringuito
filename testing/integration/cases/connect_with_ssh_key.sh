@@ -1,6 +1,3 @@
-unset SSH_AUTH_SOCK
-
-export SSH_EXTRA_OPTS="${SSH_EXTRA_OPTS} -i ${PWD}/ssh-keys/id_rsa"
 export EXIT_AFTER_CONNECT=1
 
-${XIRI_EXE} -X ${SSH_USER}@${REMOTE_IP}
+${XIRI_EXE} -k ${PWD}/ssh-keys/id_rsa -X ${SSH_USER}@${REMOTE_IP}
