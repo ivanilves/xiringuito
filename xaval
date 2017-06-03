@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+#
+# xaval - xiringuito connection manager
+#
+set -u
+set -e
+set -o pipefail
+
+declare -r DIR=${HOME}/.xiringuito/profiles; mkdir -p ${DIR}
+
+function print_help(){
+  cat <<EOF
+[ xaval - xiringuito connection manager ]
+
+Usage: ${0} connect PROFILE
+       ${0} list [FILTER_EXPR]
+       ${0} create PROFILE XIRINGUITO_PARAMS
+       ${0} update PROFILE XIRINGUITO_PARAMS
+       ${0} upsert PROFILE XIRINGUITO_PARAMS
+       ${0} delete PROFILE
+       ${0} rename OLD_PROFILE NEW_PROFILE
+
+HINT: Run without any arguments to enter interactive mode!
+
+Examples:
+  ${0} create PROD -f 3 -X root@production.server.com 10.67.42.0/24 172.21.0.0/16
+  ${0} connect PROD
+
+EOF
+}
+
+function commit_suicide(){
+  echo "[ ERROR ]"
+  echo "${@}"
+  exit 1
+}
+
+function print_help_and_commit_suicide(){
+  print_help
+  commit_suicide "${@}"
+}
+
+function validate_command(){
+  for _CMD in list connect create update upsert delete rename; do
+    if [[ "${_CMD}" == "${1}" ]]; then
+      echo "${1}"
+      return
+    fi
+  done
+}
+
+function suicide_on_absent_profile(){
+  if [[ ! -f "${DIR}/${1}" ]]; then
+    commit_suicide "Profile does not exist: ${1}"
+  fi
+}
+
+function suicide_on_existing_profile(){
+  if [[ -f "${DIR}/${1}" ]]; then
+    commit_suicide "Profile already exists: ${1}"
+  fi
+}
+
+function select_profile(){
+  local START_NUMBER=1
+  local PROFILE_COUNT=$(list_profiles | wc -l)
+
+  if [[ ${PROFILE_COUNT} -eq 0 ]]; then
+    print_help
+    echo "You have no profiles configured..."
+    exit 0
+  fi
+
+  list_profiles | awk '{printf "%2d) %s\n", NR, $0}' 
+  echo; read -p "PROFILE NUMBER (${START_NUMBER}-${PROFILE_COUNT})>" PROFILE_NUMBER
+
+  if [[ ${PROFILE_NUMBER} =~ "^[0-9]+$" ]]; then
+    commit_suicide "Should be a natural number!"
+  fi
+
+  if [[ ${PROFILE_NUMBER} -lt ${START_NUMBER} ]]; then
+    commit_suicide "Should be >= ${START_NUMBER}"
+  fi
+
+  if [[ ${PROFILE_NUMBER} -gt ${PROFILE_COUNT} ]]; then
+    commit_suicide "Should be <= ${PROFILE_COUNT}"
+  fi
+
+  local PROFILE=$(list_profiles | head -n${PROFILE_NUMBER} | tail -n1 | cut -d' ' -f1)
+
+  connect_profile ${PROFILE}
+}
+
+function list_profiles(){
+  local FILTER_EXPR="${@}"
+  if [[ -z "${FILTER_EXPR}" ]]; then
+    FILTER_EXPR=".*"
+  fi
+  for PROFILE in $(find ${DIR} -type f -printf "%f\n" | egrep "${FILTER_EXPR}" | sort); do
+    printf "%-20s = %s\n" ${PROFILE} "$(cat ${DIR}/${PROFILE})"
+  done
+}
+
+function create_profile(){
+  local PROFILE=${1}; shift
+
+  suicide_on_existing_profile ${PROFILE}
+
+  echo "${@}" >${DIR}/${PROFILE}
+}
+
+function update_profile(){
+  local PROFILE=${1}; shift
+
+  suicide_on_absent_profile ${PROFILE}
+
+  echo "${@}" >${DIR}/${PROFILE}
+}
+
+function upsert_profile(){
+  local PROFILE=${1}; shift
+
+  echo "${@}" >${DIR}/${PROFILE}
+}
+
+function delete_profile(){
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  rm ${DIR}/${PROFILE}
+}
+
+function connect_profile(){
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  exec $(dirname ${0})/xiringuito $(cat ${DIR}/${PROFILE})
+}
+
+function rename_profile(){
+  local OLD_PROFILE=${1}
+  local NEW_PROFILE=${2}
+
+  suicide_on_absent_profile ${OLD_PROFILE}
+  suicide_on_existing_profile ${NEW_PROFILE}
+
+  mv ${DIR}/${OLD_PROFILE} ${DIR}/${NEW_PROFILE}
+}
+
+if [[ $(echo "${@}" | egrep "((^|(^| )-{1,2})help|^-h)($| )") ]]; then
+  print_help
+  exit 0
+fi
+
+if [[ ${#} -eq 0 ]]; then
+  select_profile
+fi
+
+declare -r CMD=${1}; shift
+
+if [[ ! $(validate_command ${CMD}) ]]; then
+  print_help_and_commit_suicide "Illegal command: ${CMD}"
+fi
+
+if [[ "${CMD}" == "list" ]]; then
+  list_profiles "${@}"
+  exit 0
+fi
+
+if [[ "${CMD}" == "connect" || "${CMD}" == "delete" ]]; then
+  if [[ ${#} -ne 1 ]]; then
+    print_help_and_commit_suicide "Command requires exactly 1 parameter: ${CMD}"
+  fi
+elif [[ ${CMD} == "rename" ]]; then
+  if [[ ${#} -ne 2 ]]; then
+    print_help_and_commit_suicide "Command requires exactly 2 parameters: ${CMD}"
+  fi
+else
+  if [[ ${#} -lt 2 ]]; then
+    print_help_and_commit_suicide "Not enough parameters for the command: ${CMD}"
+  fi
+fi
+
+eval ${CMD}_profile ${@}
