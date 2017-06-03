@@ -39,5 +39,8 @@ As long as your routes do not overlap, you can run as many `xiringuito` tunnels 
 
 <img src="xiringuito.png" width="256px" />
 
+## Xaval: connection manager
+**NB!** To ease xiringuito configuration `xaval` connection manager script (is inside the project) could be used.
+
 ## Future?
-Before, due to lack of testing, we had some complications with adding new features and changing `xiringuito` behavior, but since **[this PR](https://github.com/ivanilves/xiringuito/pull/32)** was merged, we are covered and will bravely proceed with addressing **[issues](https://github.com/ivanilves/xiringuito/issues)** and any challenges on our way. 
+Before, due to lack of testing, we had some complications with adding new features and changing `xiringuito` behavior, but since **[this PR](https://github.com/ivanilves/xiringuito/pull/32)** was merged, we are covered and will bravely proceed with addressing **[issues](https://github.com/ivanilves/xiringuito/issues)** and any challenges on our way.
