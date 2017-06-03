@@ -16,6 +16,7 @@ Usage: ${0} connect PROFILE
        ${0} list [FILTER_EXPR]
        ${0} create PROFILE XIRINGUITO_PARAMS
        ${0} update PROFILE XIRINGUITO_PARAMS
+       ${0} upsert PROFILE XIRINGUITO_PARAMS
        ${0} delete PROFILE
        ${0} rename OLD_PROFILE NEW_PROFILE
 
@@ -40,7 +41,7 @@ function print_help_and_commit_suicide(){
 }
 
 function validate_command(){
-  for _CMD in list connect create update delete rename; do
+  for _CMD in list connect create update upsert delete rename; do
     if [[ "${_CMD}" == "${1}" ]]; then
       echo "${1}"
       return
@@ -65,6 +66,7 @@ function select_profile(){
   local PROFILE_COUNT=$(list_profiles | wc -l)
 
   if [[ ${PROFILE_COUNT} -eq 0 ]]; then
+    print_help
     echo "You have no profiles configured..."
     exit 0
   fi
@@ -94,7 +96,7 @@ function list_profiles(){
   if [[ -z "${FILTER_EXPR}" ]]; then
     FILTER_EXPR=".*"
   fi
-  for PROFILE in $(find ${DIR} -type f -printf "%f\n" | egrep "${FILTER_EXPR}"); do
+  for PROFILE in $(find ${DIR} -type f -printf "%f\n" | egrep "${FILTER_EXPR}" | sort); do
     printf "%-20s = %s\n" ${PROFILE} "$(cat ${DIR}/${PROFILE})"
   done
 }
@@ -111,6 +113,12 @@ function update_profile(){
   local PROFILE=${1}; shift
 
   suicide_on_absent_profile ${PROFILE}
+
+  echo "${@}" >${DIR}/${PROFILE}
+}
+
+function upsert_profile(){
+  local PROFILE=${1}; shift
 
   echo "${@}" >${DIR}/${PROFILE}
 }
