@@ -203,12 +203,16 @@ while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
     exit 0
   fi
 
+  FAILED_PINGS=0
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
   if [[ ${?} -ne 0 ]]; then
     let FAILED_PINGS+=1
-    echo "* Failed to ping server-side tunnel endpoint... (${FAILED_PINGS}/${MAX_FAILED_PINGS})"
+    echo "- Failed to ping server-side tunnel endpoint... (${FAILED_PINGS}/${MAX_FAILED_PINGS})"
   else
-    FAILED_PINGS=0
+    if [[ ${FAILED_PINGS} -gt 0 ]]; then
+      FAILED_PINGS=0
+      echo "+ Connectivity restored!"
+    fi
   fi
 
   sleep 1
