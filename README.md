@@ -37,7 +37,7 @@ As long as your routes do not overlap, you can run as many `xiringuito` tunnels 
 ## xirin... WHAT?
 "xiringuito" is a Catalan way of saying popular Spanish word "chiringuito", which usually means a beach bar in a more or less provisional building. As long as such places usually stand on a loose surface, operate without license and work only with cash, in urban dictionary "chiringuito" could mean any dodgy business, any activity of questional legality and confidence. I've picked up this name because I've wrote this as a quick temporary hack, partially in a bus, partially in a train, while travelling back and forth between job and home. But ... nothing is more permanent than the temporary, right? :smile:
 
-<img src="xiringuito.png" width="256px" />
+<img src="images/xiringuito.png" width="256px" />
 
 ## Xaval: connection manager
 **NB!** To ease xiringuito configuration `xaval` connection manager script (is inside the project) could be used.
