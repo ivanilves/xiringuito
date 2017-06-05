@@ -1,0 +1,4 @@
+#/usr/bin/env bash
+
+cd __INSTALL_PATH__
+./$(basename ${0}) ${@}
