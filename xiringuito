@@ -203,7 +203,6 @@ while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
     exit 0
   fi
 
-  FAILED_PINGS=0
   ./scripts/client-ping-server.sh ${TUNNEL_ID} ${IP_BASE}
   if [[ ${?} -ne 0 ]]; then
     let FAILED_PINGS+=1
