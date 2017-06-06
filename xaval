@@ -2,7 +2,6 @@
 #
 # xaval - xiringuito connection manager
 #
-set -u
 set -e
 set -o pipefail
 
@@ -63,7 +62,7 @@ function suicide_on_existing_profile(){
 
 function select_profile(){
   local START_NUMBER=1
-  local PROFILE_COUNT=$(list_profiles | wc -l)
+  local PROFILE_COUNT=$(list_profiles | wc -l | sed 's/ //g')
 
   if [[ ${PROFILE_COUNT} -eq 0 ]]; then
     print_help
@@ -96,7 +95,7 @@ function list_profiles(){
   if [[ -z "${FILTER_EXPR}" ]]; then
     FILTER_EXPR=".*"
   fi
-  for PROFILE in $(find ${DIR} -type f -printf "%f\n" | egrep "${FILTER_EXPR}" | sort); do
+  for PROFILE in $(find ${DIR} -type f | awk -F"/" '{print $NF}' | egrep "${FILTER_EXPR}" | sort); do
     printf "%-20s = %s\n" ${PROFILE} "$(cat ${DIR}/${PROFILE})"
   done
 }
