@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# Waits TIMEOUT seconds, makes probes every second, until COMMAND returns
+#
+function die(){
+  [[ "${WAIT_VERBOSE}" == "true" ]] && echo
+  echo "[ ERROR ]"
+  echo "${@}"
+  exit 1
+}
+
+function signal_progress(){
+  [[ "${WAIT_VERBOSE}" == "true" ]] && echo -n "="
+}
+
+function success(){
+  [[ "${WAIT_VERBOSE}" == "true" && ${WAIT_TIME} -gt 0 ]] && echo "|"
+  exit 0
+}
+
+[[ ${#} -ge 3 ]] || die "Usage: wait_for true|false TIMEOUT COMMAND"
+
+[[ ${1} == "true" || ${1} == "false" ]] || die "'true' or 'false' for the first argument please!"
+
+declare -r RESOLUTION=${1}; shift
+declare -r TIMEOUT=${1}; shift
+declare -r COMMAND="${@}"
+
+WAIT_TIME=0
+while [[ ${WAIT_TIME} -lt ${TIMEOUT} ]]; do
+  ${COMMAND}
+  RETVAL=${?}
+
+  if [[ "${RESOLUTION}" == "true" ]]; then
+    [[ ${RETVAL} -eq 0 ]] && success
+  else
+    [[ ${RETVAL} -ne 0 ]] && success
+  fi
+
+  sleep 1
+  let WAIT_TIME+=1
+  signal_progress
+done
+
+
+if [[ "${RESOLUTION}" == "true" ]]; then
+  FAIL_STATE=fails
+else
+  FAIL_STATE=succeeds
+fi
+die "\"${@}\" still ${FAIL_STATE} after ${TIMEOUT} seconds"
