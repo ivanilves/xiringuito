@@ -28,7 +28,7 @@ declare -r COMMAND="${@}"
 
 WAIT_TIME=0
 while [[ ${WAIT_TIME} -lt ${TIMEOUT} ]]; do
-  ${COMMAND}
+  ${COMMAND} &>/dev/null
   RETVAL=${?}
 
   if [[ "${RESOLUTION}" == "true" ]]; then

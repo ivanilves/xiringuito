@@ -2,7 +2,10 @@
 #
 # Obscene SSH-based VPN for poors ;)
 #
-set -e
+set -eo pipefail
+
+export PATH="${PATH}:$(dirname ${0})/helpers"
+export WAIT_VERBOSE=true
 
 function print_help() {
   echo "Usage: ${0} [OPTIONS] [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
@@ -153,7 +156,7 @@ scp ${SSH_OPTS} ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null
 
 ssh ${SSH_OPTS} ${SSH_SERVER} ${REMOTE_PATH}/server-setup.sh ${TUNNEL_ID} ${IP_BASE}
 
-sleep 1; echo -n "SERVER: ${SSH_SERVER} ... "
+sleep 1; echo "SERVER: ${SSH_SERVER}"
 set +e
 ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh &>/dev/null
 set -e
@@ -166,7 +169,7 @@ ${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:$
 SSH_PID=${!}
 sudo -E ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
-sleep 5
+wait_for true 5 ip link show dev tun${LOCAL_TUNNEL_ID}
 
 if [[ ${KERNEL} == darwin ]]; then
   ./scripts/${KERNEL}/client-setup.sh ${TUNNEL_ID} ${LOCAL_TUNNEL_ID} ${IP_BASE}
@@ -220,5 +223,6 @@ done
 teardown
 
 if [[ -z "${NO_RECONNECT}" ]]; then
+  wait_for false 10 ip link show dev tun${LOCAL_TUNNEL_ID}
   exec ${ORIGINAL_EXEC} -r ${ORIGINAL_ARGS}
 fi
