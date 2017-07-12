@@ -15,7 +15,6 @@ function print_help() {
   echo "-f MAX_FAILED_PINGS    fail connection after X ping failures"
   echo
   echo "-C    do not check if we run outdated app version"
-  echo "-R    do not reconnect after connection failure"
   echo "-D    do not fetch DNS config from server"
   echo "-X    do not run route discovery"
   echo "-h    show this extremely helpful message"
@@ -40,11 +39,6 @@ if [[ ${#} -lt 1 ]]; then
   print_help
   exit 1
 fi
-
-# We need to save executable path and arguments for reconnection functionality
-export PATH="${PATH}:."
-declare -r ORIGINAL_EXEC=${0}
-declare -r ORIGINAL_ARGS=${@}
 
 while getopts "k:f:CRDXrh" o; do
   case ${o} in
@@ -71,17 +65,11 @@ while getopts "k:f:CRDXrh" o; do
     C)
       DONT_CHECK_IF_OUTDATED=true
       ;;
-    R)
-      NO_RECONNECT=true
-      ;;
     D)
       NO_DNS=true
       ;;
     X)
       NO_ROUTE_DISCOVERY=true
-      ;;
-    r)
-      RECONNECTING=true
       ;;
     h)
       print_help
@@ -178,7 +166,7 @@ fi
 set +e
 for NETWORK in ${NETWORKS}; do
   echo "> ROUTE: ${NETWORK}"
-  [[ -z "${RECONNECTING}" ]] && ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
+  ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
 done
 set -e
 
@@ -221,8 +209,3 @@ while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
 done
 
 teardown
-
-if [[ -z "${NO_RECONNECT}" ]]; then
-  wait_for false 10 ip link show dev tun${LOCAL_TUNNEL_ID}
-  exec ${ORIGINAL_EXEC} -r ${ORIGINAL_ARGS}
-fi
