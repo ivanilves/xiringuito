@@ -116,7 +116,7 @@ fi
 declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
 declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
 
-declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectionAttempts=3 -oConnectTimeout=10 ${SSH_PRIVATE_KEY_OPTS} ${SSH_EXTRA_OPTS}"
+declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectionAttempts=3 -oConnectTimeout=3 ${SSH_PRIVATE_KEY_OPTS} ${SSH_EXTRA_OPTS}"
 
 if [[ ${KERNEL} == linux ]]; then
   declare -r LOCAL_TUNNEL_ID=${TUNNEL_ID}

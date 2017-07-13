@@ -16,6 +16,10 @@ declare -r XIRINGUITO_PID=${1}
 declare -r SSH_PID=${2}
 declare -r TUNNEL_ID=${3}
 
+if [[ ${SSH_PID} -eq 0 ]]; then
+  kill ${XIRINGUITO_PID} &>/dev/null
+fi
+
 while [[ -d /proc/${XIRINGUITO_PID} ]]; do sleep 1; done
 
 if [[ -f /etc/resolv.conf.orig ]]; then

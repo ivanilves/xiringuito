@@ -2,10 +2,13 @@
 #
 # xaval - xiringuito connection manager
 #
+[[ "${DEBUG}" == "true" ]] && set -x
+
 set -e
 set -o pipefail
 
 declare -r DIR=${HOME}/.xiringuito/profiles; mkdir -p ${DIR}
+declare -r RECONNECT_AFTER=5
 
 function print_help(){
   cat <<EOF
@@ -135,7 +138,17 @@ function connect_profile(){
 
   suicide_on_absent_profile ${PROFILE}
 
-  exec $(dirname ${0})/xiringuito $(cat ${DIR}/${PROFILE})
+  set +e
+  TRY=true
+  while [[ ${TRY} == true ]]; do
+    $(dirname ${0})/xiringuito $(cat ${DIR}/${PROFILE})
+    if [[ ${?} -eq 0 || ${?} -eq 143 ]]; then
+      echo "=> Will sleep ${RECONNECT_AFTER} seconds before reconnection..."
+      sleep ${RECONNECT_AFTER}
+    else
+      TRY=false
+    fi
+  done
 }
 
 function rename_profile(){
