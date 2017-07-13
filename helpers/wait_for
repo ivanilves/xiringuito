@@ -2,6 +2,12 @@
 #
 # Waits TIMEOUT seconds, makes probes every second, until COMMAND returns
 #
+OUTPUT=/dev/null
+if [[ "${DEBUG}" == "true" ]]; then
+  set -x
+  OUTPUT=/dev/stderr
+fi
+
 function die(){
   [[ "${WAIT_VERBOSE}" == "true" ]] && echo
   echo "[ ERROR ]"
@@ -28,7 +34,7 @@ declare -r COMMAND="${@}"
 
 WAIT_TIME=0
 while [[ ${WAIT_TIME} -lt ${TIMEOUT} ]]; do
-  ${COMMAND} &>/dev/null
+  bash -c "${COMMAND}" >${OUTPUT}
   RETVAL=${?}
 
   if [[ "${RESOLUTION}" == "true" ]]; then

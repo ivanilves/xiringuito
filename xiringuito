@@ -17,6 +17,7 @@ function print_help() {
   echo "-C    do not check if we run outdated app version"
   echo "-D    do not fetch DNS config from server"
   echo "-X    do not run route discovery"
+  echo "-c    use route cache instead of route discovery"
   echo "-h    show this extremely helpful message"
   echo
 }
@@ -40,7 +41,7 @@ if [[ ${#} -lt 1 ]]; then
   exit 1
 fi
 
-while getopts "k:f:CRDXrh" o; do
+while getopts "k:f:CRDXch" o; do
   case ${o} in
     k)
       PRIVATE_KEY_PATH=${OPTARG}
@@ -71,6 +72,9 @@ while getopts "k:f:CRDXrh" o; do
     X)
       NO_ROUTE_DISCOVERY=true
       ;;
+    c)
+      USE_ROUTE_CACHE=true
+      ;;
     h)
       print_help
       exit 0
@@ -97,10 +101,17 @@ echo -n "[ sudo check ] "; sudo true; echo
 
 declare -r SSH_SERVER=${1}; shift
 
+declare -r ROUTE_CACHE_PATH=~/.xiringuito/routes; mkdir -p ${ROUTE_CACHE_PATH}
+declare -r ROUTE_CACHE_FILE=${ROUTE_CACHE_PATH}/${SSH_SERVER}
 if [[ ${#} -gt 0 ]]; then
   declare -r NETWORKS=${@}
 elif [[ -x ./discover-routes && ! ${NO_ROUTE_DISCOVERY} ]]; then
-  declare -r NETWORKS=$(./discover-routes ${SSH_SERVER} | grep "^ROUTE:" | sed 's/.*://')
+  if [[ ${USE_ROUTE_CACHE} != true ]]; then
+    declare -r NETWORKS=$(./discover-routes ${SSH_SERVER} | grep "^ROUTE:" | sed 's/.*://')
+    echo "${NETWORKS}" >"${ROUTE_CACHE_FILE}"
+  else
+    declare -r NETWORKS=$(cat ${ROUTE_CACHE_FILE})
+  fi
 fi
 
 declare -r IP_BASE=192.168.245

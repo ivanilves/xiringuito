@@ -140,10 +140,12 @@ function connect_profile(){
 
   set +e
   TRY=true
+  OPTS=""
   while [[ ${TRY} == true ]]; do
-    $(dirname ${0})/xiringuito $(cat ${DIR}/${PROFILE})
+    $(dirname ${0})/xiringuito ${OPTS} $(cat ${DIR}/${PROFILE})
     if [[ ${?} -eq 0 || ${?} -eq 143 ]]; then
       echo "=> Will sleep ${RECONNECT_AFTER} seconds before reconnection..."
+      OPTS="-c"
       sleep ${RECONNECT_AFTER}
     else
       TRY=false

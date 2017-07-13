@@ -9,6 +9,8 @@ chmod -R go-rwx ssh-keys
 declare -r DISTS=$(find . -type f -name "Dockerfile.*" | sed 's/.*\.//')
 declare -r CASES=$(ls -1 cases | sed 's/\.sh$//')
 
+export PATH=${PATH}:${PWD}/../../helpers
+
 function setup(){
   echo
   echo "[ SETUP ]"
@@ -22,10 +24,18 @@ function kill_reliably(){
   local CHECK_DELAY=${2}
 
   kill ${TARGET_PID}
-  sleep ${CHECK_DELAY}
+  TIME_PASSED=0
+  while [[ ${TIME_PASSED} -le ${CHECK_DELAY} ]]; do
+    if [[ $(ps -p ${TARGET_PID} | wc -l) -eq 2 ]]; then
+      sleep 1
+      let TIME_PASSED+=1
+    else
+      return
+    fi
+  done
   if [[ $(ps -p ${TARGET_PID} | wc -l) -eq 2 ]]; then
     kill -9 ${TARGET_PID} &>/dev/null
-    sleep ${CHECK_DELAY}
+    sleep 1
   fi
 }
 
@@ -64,11 +74,11 @@ function run_case(){
     export LANG=C
     export LC_ALL=C
 
-    [[ ${DEBUG} ]] && set -x
+    [[ "${DEBUG}" == "true" ]] && set -x
     set -e
     source cases/${1}.sh
     set +e
-    [[ ${DEBUG} ]] && set +x
+    [[ "${DEBUG}" == "true" ]] && set +x
   done
 }
 
@@ -82,6 +92,8 @@ function teardown(){
   done
 
   kill ${SSH_AGENT_PID}
+
+  [[ -f /tmp/discover-routes.orig ]] && mv /tmp/discover-routes.orig ${WD}/discover-routes
 
   if [[ "${SUCCESS}" == "true" ]]; then
     echo
