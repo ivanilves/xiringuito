@@ -30,13 +30,15 @@ function kill_reliably(){
       sleep 1
       let TIME_PASSED+=1
     else
-      return
+      sleep 2
+      return 0
     fi
   done
   if [[ $(ps -p ${TARGET_PID} | wc -l) -eq 2 ]]; then
     kill -9 ${TARGET_PID} &>/dev/null
     sleep 1
   fi
+  sleep 2
 }
 
 function warn(){

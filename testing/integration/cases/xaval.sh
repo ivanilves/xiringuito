@@ -47,8 +47,6 @@ if [[ "$(cat ${PROFILE_DIR}/${PROFILE})" != "-X ${SSH_USER}@${REMOTE_IP}" ]]; th
   exit 1
 fi
 
-${WD}/xaval connect ${PROFILE}
-
 ${WD}/xaval delete ${PROFILE}
 if [[ -f "${PROFILE_DIR}/${PROFILE}" ]]; then
   complain "Xaval has not deleted profile file: ${PROFILE_DIR}/${PROFILE}"
