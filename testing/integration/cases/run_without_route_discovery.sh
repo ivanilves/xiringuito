@@ -7,7 +7,8 @@ if [[ -f ${WD}/discover-routes ]]; then
 fi
 
 ${XIRI_EXE} -f 1 -X ${SSH_USER}@${REMOTE_IP} &
-XIRI_PID=${!}; sleep ${INIT_DELAY}
+XIRI_PID=${!}
+wait_for true ${INIT_DELAY} pgrep -f -- "-w.*${SSH_USER}@${REMOTE_IP}"
 
 warn "$(ip route | grep 10.42.42.42)"
 if [[ -n "$(ip route | grep 10.42.42.42)" ]]; then
