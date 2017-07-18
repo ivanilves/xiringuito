@@ -8,7 +8,7 @@ DOWN_DELAY=10
 
 ORIG_LINKS=$(get_server_links)
 
-${XIRI_EXE} -f 1 -X ${SSH_USER}@${REMOTE_IP} &
+${XIRI_EXE} -f 2 -X ${SSH_USER}@${REMOTE_IP} &
 XIRI_PID=${!}; sleep ${INIT_DELAY}
 NEW_LINKS=$(get_server_links)
 

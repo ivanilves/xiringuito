@@ -11,7 +11,7 @@ echo '#!/bin/sh' >${WD}/discover-routes
 echo "echo ROUTE:${MOCKED_ROUTE}" >>${WD}/discover-routes
 chmod +x ${WD}/discover-routes
 
-${XIRI_EXE} ${SSH_USER}@${REMOTE_IP} &
+${XIRI_EXE} -f 1 ${SSH_USER}@${REMOTE_IP} &
 XIRI_PID=${!}
 set +e
 wait_for true ${INIT_DELAY} "ip route | grep ${MOCKED_ROUTE}"

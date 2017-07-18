@@ -8,7 +8,7 @@ if [[ -f ${WD}/discover-routes ]]; then
   mv ${WD}/discover-routes /tmp/discover-routes.orig
 fi
 
-${XIRI_EXE} -f 3 -X ${SSH_USER}@${REMOTE_IP} &
+${XIRI_EXE} -f 2 -X ${SSH_USER}@${REMOTE_IP} &
 XIRI_PID=${!}
 wait_for true ${INIT_DELAY} pgrep -f -- "-w.*${SSH_USER}@${REMOTE_IP}"
 
