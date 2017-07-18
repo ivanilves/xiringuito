@@ -3,17 +3,17 @@ function get_server_links(){
     | egrep "tun[0-9]{1,2}" | cut -f2 -d' ' | tr '\n' ' '
 }
 
-INIT_DELAY=10
+INIT_DELAY=5
 DOWN_DELAY=10
 
 ORIG_LINKS=$(get_server_links)
 
-${XIRI_EXE} -f 1 -X -R ${SSH_USER}@${REMOTE_IP} &
+${XIRI_EXE} -f 2 -X ${SSH_USER}@${REMOTE_IP} &
 XIRI_PID=${!}; sleep ${INIT_DELAY}
 NEW_LINKS=$(get_server_links)
 
 kill_reliably ${XIRI_PID} ${DOWN_DELAY}
-
+sleep 10
 FINAL_LINKS=$(get_server_links)
 
 if [[ "${ORIG_LINKS}" == "${NEW_LINKS}" ]]; then

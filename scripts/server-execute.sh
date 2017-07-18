@@ -28,8 +28,6 @@ function teardown() {
   [[ ! -x /usr/sbin/tunctl ]] && sudo ip tuntap del mode tun ${NETWORK_DEVICE} || sudo /usr/sbin/tunctl -d ${NETWORK_DEVICE}
 }
 
-echo "CONNECTED"
-
 FAILED_PINGS=0
 while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
   ping -W3 -c1 -nq ${CLIENT_IP_ADDR} >/dev/null

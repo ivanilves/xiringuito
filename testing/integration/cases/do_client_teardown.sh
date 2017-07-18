@@ -1,3 +1,5 @@
+sleep 2
+
 function get_client_links(){
   ip link | egrep "tun[0-9]{1,2}" | cut -f2 -d' ' | tr '\n' ' '
 }
@@ -7,7 +9,7 @@ DOWN_DELAY=2
 
 ORIG_LINKS=$(get_client_links)
 
-${XIRI_EXE} -X -R ${SSH_USER}@${REMOTE_IP} &
+${XIRI_EXE} -f 1 -X ${SSH_USER}@${REMOTE_IP} &
 XIRI_PID=${!}; sleep ${INIT_DELAY}
 NEW_LINKS=$(get_client_links)
 

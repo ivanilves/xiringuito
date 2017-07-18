@@ -2,7 +2,10 @@
 #
 # Obscene SSH-based VPN for poors ;)
 #
-set -e
+set -eo pipefail
+
+export PATH="${PATH}:$(dirname ${0})/helpers"
+export WAIT_VERBOSE=true
 
 function print_help() {
   echo "Usage: ${0} [OPTIONS] [SSH_USER@]SSH_SERVER [NETWORK1, NETWORK2, ... NETWORKx]"
@@ -12,9 +15,9 @@ function print_help() {
   echo "-f MAX_FAILED_PINGS    fail connection after X ping failures"
   echo
   echo "-C    do not check if we run outdated app version"
-  echo "-R    do not reconnect after connection failure"
   echo "-D    do not fetch DNS config from server"
   echo "-X    do not run route discovery"
+  echo "-c    use route cache instead of route discovery"
   echo "-h    show this extremely helpful message"
   echo
 }
@@ -38,12 +41,7 @@ if [[ ${#} -lt 1 ]]; then
   exit 1
 fi
 
-# We need to save executable path and arguments for reconnection functionality
-export PATH="${PATH}:."
-declare -r ORIGINAL_EXEC=${0}
-declare -r ORIGINAL_ARGS=${@}
-
-while getopts "k:f:CRDXrh" o; do
+while getopts "k:f:CRDXch" o; do
   case ${o} in
     k)
       PRIVATE_KEY_PATH=${OPTARG}
@@ -68,17 +66,14 @@ while getopts "k:f:CRDXrh" o; do
     C)
       DONT_CHECK_IF_OUTDATED=true
       ;;
-    R)
-      NO_RECONNECT=true
-      ;;
     D)
       NO_DNS=true
       ;;
     X)
       NO_ROUTE_DISCOVERY=true
       ;;
-    r)
-      RECONNECTING=true
+    c)
+      USE_ROUTE_CACHE=true
       ;;
     h)
       print_help
@@ -106,10 +101,17 @@ echo -n "[ sudo check ] "; sudo true; echo
 
 declare -r SSH_SERVER=${1}; shift
 
+declare -r ROUTE_CACHE_PATH=~/.xiringuito/routes; mkdir -p ${ROUTE_CACHE_PATH}
+declare -r ROUTE_CACHE_FILE=${ROUTE_CACHE_PATH}/${SSH_SERVER}
 if [[ ${#} -gt 0 ]]; then
   declare -r NETWORKS=${@}
 elif [[ -x ./discover-routes && ! ${NO_ROUTE_DISCOVERY} ]]; then
-  declare -r NETWORKS=$(./discover-routes ${SSH_SERVER} | grep "^ROUTE:" | sed 's/.*://')
+  if [[ ${USE_ROUTE_CACHE} != true ]]; then
+    declare -r NETWORKS=$(./discover-routes ${SSH_SERVER} | grep "^ROUTE:" | sed 's/.*://')
+    echo "${NETWORKS}" >"${ROUTE_CACHE_FILE}"
+  else
+    declare -r NETWORKS=$(cat ${ROUTE_CACHE_FILE})
+  fi
 fi
 
 declare -r IP_BASE=192.168.245
@@ -125,7 +127,7 @@ fi
 declare -r TUNNEL_ID=$(cat ${TUNNEL_ID_FILE})
 declare -r REMOTE_PATH="/tmp/xiringuito.${TUNNEL_ID}"
 
-declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectionAttempts=3 -oConnectTimeout=10 ${SSH_PRIVATE_KEY_OPTS} ${SSH_EXTRA_OPTS}"
+declare -r SSH_OPTS="-oLogLevel=${SSH_LOG_LEVEL:-ERROR} -oConnectionAttempts=3 -oConnectTimeout=5 ${SSH_PRIVATE_KEY_OPTS} ${SSH_EXTRA_OPTS}"
 
 if [[ ${KERNEL} == linux ]]; then
   declare -r LOCAL_TUNNEL_ID=${TUNNEL_ID}
@@ -153,7 +155,7 @@ scp ${SSH_OPTS} ./scripts/server-*.sh ${SSH_SERVER}:${REMOTE_PATH} >/dev/null
 
 ssh ${SSH_OPTS} ${SSH_SERVER} ${REMOTE_PATH}/server-setup.sh ${TUNNEL_ID} ${IP_BASE}
 
-sleep 1; echo -n "SERVER: ${SSH_SERVER} ... "
+sleep 1; echo "SERVER: ${SSH_SERVER}"
 set +e
 ssh ${SSH_OPTS} ${SSH_SERVER} pkill -f ${REMOTE_PATH}/server-execute.sh &>/dev/null
 set -e
@@ -166,7 +168,7 @@ ${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:$
 SSH_PID=${!}
 sudo -E ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
-sleep 5
+wait_for true 5 ip link show dev tun${LOCAL_TUNNEL_ID}
 
 if [[ ${KERNEL} == darwin ]]; then
   ./scripts/${KERNEL}/client-setup.sh ${TUNNEL_ID} ${LOCAL_TUNNEL_ID} ${IP_BASE}
@@ -175,7 +177,7 @@ fi
 set +e
 for NETWORK in ${NETWORKS}; do
   echo "> ROUTE: ${NETWORK}"
-  [[ -z "${RECONNECTING}" ]] && ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
+  ./scripts/${KERNEL}/client-route.sh ${LOCAL_TUNNEL_ID} ${NETWORK}
 done
 set -e
 
@@ -218,7 +220,3 @@ while [[ ${FAILED_PINGS} -lt ${MAX_FAILED_PINGS} ]]; do
 done
 
 teardown
-
-if [[ -z "${NO_RECONNECT}" ]]; then
-  exec ${ORIGINAL_EXEC} -r ${ORIGINAL_ARGS}
-fi
