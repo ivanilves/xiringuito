@@ -1,18 +1,22 @@
-INIT_DELAY=15
-DOWN_DELAY=5
+INIT_DELAY=20
+DOWN_DELAY=10
 POST_DELAY=5
+
+MOCKED_ROUTE=10.42.42.0/30
 
 if [[ -f ${WD}/discover-routes ]]; then
   mv ${WD}/discover-routes /tmp/discover-routes.orig
 fi
 
-${XIRI_EXE} -f 1 -X ${SSH_USER}@${REMOTE_IP} &
+${XIRI_EXE} -f 3 -X ${SSH_USER}@${REMOTE_IP} &
 XIRI_PID=${!}
 wait_for true ${INIT_DELAY} pgrep -f -- "-w.*${SSH_USER}@${REMOTE_IP}"
 
-warn "$(ip route | grep 10.42.42.42)"
-if [[ -n "$(ip route | grep 10.42.42.42)" ]]; then
-  complain "Route added by (non-existing) route discovery: 10.42.42.42/32"
+sleep ${POST_DELAY}
+
+warn "$(ip route | grep ${MOCKED_ROUTE})"
+if [[ -n "$(ip route | grep ${MOCKED_ROUTE})" ]]; then
+  complain "Route added by (non-existing) route discovery: ${MOCKED_ROUTE}"
   exit 1
 fi
 

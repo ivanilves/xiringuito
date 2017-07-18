@@ -1,22 +1,25 @@
-INIT_DELAY=15
-DOWN_DELAY=5
-POST_DELAY=5
+INIT_DELAY=20
+DOWN_DELAY=10
+POST_DELAY=2
+
+MOCKED_ROUTE=10.42.42.0/30
 
 if [[ -f ${WD}/discover-routes ]]; then
   mv ${WD}/discover-routes /tmp/discover-routes.orig
 fi
 echo '#!/bin/sh' >${WD}/discover-routes
-echo 'echo ROUTE:10.42.42.42/32' >>${WD}/discover-routes
+echo "echo ROUTE:${MOCKED_ROUTE}" >>${WD}/discover-routes
 chmod +x ${WD}/discover-routes
 
-${XIRI_EXE} -f 1 ${SSH_USER}@${REMOTE_IP} &
-XIRI_PID=${!}; sleep ${INIT_DELAY}
-
-warn "$(ip route | grep 10.42.42.42)"
-if [[ -z "$(ip route | grep 10.42.42.42)" ]]; then
-  complain "Route not added by route discovery: 10.42.42.42/32"
+${XIRI_EXE} ${SSH_USER}@${REMOTE_IP} &
+XIRI_PID=${!}
+set +e
+wait_for true ${INIT_DELAY} "ip route | grep ${MOCKED_ROUTE}"
+if [[ ${?} -ne 0 ]]; then
+  complain "Route not added by route discovery: ${MOCKED_ROUTE}"
   exit 1
 fi
+set -e
 
 rm ${WD}/discover-routes
 if [[ -f /tmp/discover-routes.orig ]]; then
