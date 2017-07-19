@@ -168,7 +168,7 @@ ${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:$
 SSH_PID=${!}
 sudo -E ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
-wait_for true 5 ip link show dev tun${LOCAL_TUNNEL_ID}
+wait_for true 5 "ip link show dev tun${LOCAL_TUNNEL_ID} || ifconfig tun${LOCAL_TUNNEL_ID}" &>/dev/null
 
 if [[ ${KERNEL} == darwin ]]; then
   ./scripts/${KERNEL}/client-setup.sh ${TUNNEL_ID} ${LOCAL_TUNNEL_ID} ${IP_BASE}
