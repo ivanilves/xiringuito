@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Obscene SSH-based VPN for poors ;)
+# SSH-based VPN for poors ;)
 #
 set -e
 
