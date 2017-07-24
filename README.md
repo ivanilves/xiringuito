@@ -40,13 +40,13 @@ You will need:
 Install [TunTap for Mac OS X](http://tuntaposx.sourceforge.net/) first.
 
 ## Route discovery
-Specifiying routes by hand is not bad. But we could make it better by creating an executable `discover-routes` script in the project directory. If no routes are passed by hand, `xiringuito` will run `discover-routes`, pass SSH server hostname to it and use script output as a list of routes, so you may have per-host or per-domain route lists instead of boring manual typing. More information is available in [AWS example](https://github.com/ivanilves/xiringuito/blob/master/discover-routes.aws.example) which uses AWS CLI to discover VPC subnets and route traffic to them through our VPN tunnel.
+Specifying routes by hand is not bad. But we could make it better by creating an executable `discover-routes` script in the project directory. If no routes are passed by hand, `xiringuito` will run `discover-routes`, pass SSH server hostname to it and use script output as a list of routes, so you may have per-host or per-domain route lists instead of boring manual typing. More information is available in [AWS example](https://github.com/ivanilves/xiringuito/blob/master/discover-routes.aws.example) which uses AWS CLI to discover VPC subnets and route traffic to them through our VPN tunnel.
 
 ## You can have many of them!
 As long as your routes do not overlap, you can run as many `xiringuito` tunnels as you want. **Simultaneously!**
 
 ## xirin... WHAT?
-"xiringuito" is a Catalan way of saying popular Spanish word "chiringuito", which usually means a beach bar in a more or less provisional building. As long as such places usually stand on a loose surface, operate without license and work only with cash, in urban dictionary "chiringuito" could mean any dodgy business, any activity of questional legality and confidence. I've picked up this name because I've wrote this as a quick temporary hack, partially in a bus, partially in a train, while travelling back and forth between job and home. But ... nothing is more permanent than the temporary, right? :smile:
+"xiringuito" is a Catalan way of saying popular Spanish word "chiringuito", which usually means a beach bar in a more or less provisional building. As long as such places usually stand on a loose surface, operate without license and work only with cash, in urban dictionary "chiringuito" could mean any dodgy business, any activity of questionable legality and confidence. I've picked up this name because I've wrote this as a quick temporary hack, partially in a bus, partially in a train, while travelling back and forth between job and home. But ... nothing is more permanent than the temporary, right? :smile:
 
 <img src="images/xiringuito.png" width="256px" />
 
