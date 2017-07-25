@@ -52,3 +52,14 @@ As long as your routes do not overlap, you can run as many `xiringuito` tunnels 
 
 ## Future?
 Before, due to lack of testing, we had some complications with adding new features and changing `xiringuito` behavior, but since **[this PR](https://github.com/ivanilves/xiringuito/pull/32)** was merged, we are covered and will bravely proceed with addressing **[issues](https://github.com/ivanilves/xiringuito/issues)** and any challenges on our way.
+
+## What's the difference between `xiringuito` and `sshuttle`?
+[sshuttle](https://github.com/apenwarr/sshuttle) is a very popular SSH over VPN client. Though both projects look similar, there are at least three differences:
+
+* `xiringuito` works well with RTP (Real-time Transport Protocol). This is a UDP-based protocol, the key difference between RTP and most of other UDP protocols - it used bi-directional media transport with random ports assigned on both ends. For me `sshuttle` was unable to correctly to handle RTP traffic, while `xiringuito` due to utilization of tun/tap devices, does it transparently w/o issues.
+
+* For the same reason `xiringuito` works with low-level (non-TCP & non-UDP) IP protocols like OSPF, L2TP, PPP, IGMP, IPSec, ARP, etc. While nobody should use SSH tun/tap to tunnel these protocols on production, `xiringuito` may serve you great to do some remote testing of these protocols with SSH-only connection to the infrastructure.
+
+* No Python required! Well, this is not a solid reason to use `xiringuito`, but not everybody likes Python.
+
+*`sshuttle` is a great piece of software. It suits web developers and DevOps/SysAdmins of typical web-centric projects very well. However, if you work with less typical services, or you hate Python, `xiringuito` may be a great choice :wink:*
