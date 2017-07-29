@@ -14,7 +14,6 @@ function print_help() {
   echo "-k PRIVATE_KEY_PATH    use specific SSH private key"
   echo "-f MAX_FAILED_PINGS    fail connection after X ping failures"
   echo
-  echo "-C    do not check if we run outdated app version"
   echo "-D    do not fetch DNS config from server"
   echo "-X    do not run route discovery"
   echo "-c    use route cache instead of route discovery"
@@ -41,7 +40,7 @@ if [[ ${#} -lt 1 ]]; then
   exit 1
 fi
 
-while getopts "k:f:CRDXch" o; do
+while getopts "k:f:DXch" o; do
   case ${o} in
     k)
       PRIVATE_KEY_PATH=${OPTARG}
@@ -63,9 +62,6 @@ while getopts "k:f:CRDXch" o; do
         exit 1
       fi
       ;;
-    C)
-      DONT_CHECK_IF_OUTDATED=true
-      ;;
     D)
       NO_DNS=true
       ;;
@@ -84,10 +80,6 @@ while getopts "k:f:CRDXch" o; do
       exit 1
   esac
 done
-
-if [[ ! ${DONT_CHECK_IF_OUTDATED} ]]; then
-  ./scripts/client-check-if-outdated.sh 2>/dev/null &
-fi
 
 declare -r MAX_FAILED_PINGS=${MAX_FAILED_PINGS-10}
 
