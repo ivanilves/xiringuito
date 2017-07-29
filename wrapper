@@ -1,4 +1,5 @@
 #/usr/bin/env bash
 
-cd __INSTALL_PATH__
-./$(basename ${0}) ${@}
+pushd __INSTALL_PATH__ >/dev/null
+  ./$(basename ${0}) ${@}
+popd >/dev/null
