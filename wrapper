@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 pushd __INSTALL_PATH__ >/dev/null
   ./$(basename ${0}) ${@}
