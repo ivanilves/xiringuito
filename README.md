@@ -62,4 +62,4 @@ Before, due to lack of testing, we had some complications with adding new featur
 
 * No Python required! Well, this is not a solid reason to use `xiringuito`, but not everybody likes Python.
 
-*`sshuttle` is a great piece of software. It suits web developers and DevOps/SysAdmins of typical web-centric projects very well. However, if you work with less typical services, or you hate Python, `xiringuito` may be a great choice :wink:*
+*`sshuttle` is a great piece of software. It suits web developers and DevOps/SysAdmins of typical web-centric projects very well. However, if you work with less typical services, or you hate Python (or love Bash), `xiringuito` may be a great choice :wink:*
