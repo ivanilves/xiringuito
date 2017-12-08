@@ -15,6 +15,7 @@ function print_help(){
 [ xaval - xiringuito connection manager ]
 
 Usage: ${0} connect PROFILE
+       ${0} kill PROFILE
        ${0} list [FILTER_EXPR]
        ${0} create PROFILE XIRINGUITO_PARAMS
        ${0} update PROFILE XIRINGUITO_PARAMS
@@ -43,7 +44,7 @@ function print_help_and_commit_suicide(){
 }
 
 function validate_command(){
-  for _CMD in list connect create update upsert delete rename; do
+  for _CMD in 'list' 'connect' 'create' 'update' 'upsert' 'delete' 'rename' 'kill'; do
     if [[ "${_CMD}" == "${1}" ]]; then
       echo "${1}"
       return
@@ -60,6 +61,38 @@ function suicide_on_absent_profile(){
 function suicide_on_existing_profile(){
   if [[ -f "${DIR}/${1}" ]]; then
     commit_suicide "Profile already exists: ${1}"
+  fi
+}
+
+function get_profile_pid() {
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  pgrep -U ${USER} -f -- "$(cat ${DIR}/${PROFILE})"
+}
+
+function get_profile_status() {
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  if [[ "$(get_profile_pid ${PROFILE})" != "" ]]; then
+    echo "UP"
+  else
+    echo "DOWN"
+  fi
+}
+
+function suicide_on_profile_up(){
+  if [[ "$(get_profile_status ${1})" == "UP" ]]; then
+    commit_suicide "Profile already up: ${1}"
+  fi
+}
+
+function suicide_on_profile_down(){
+  if [[ "$(get_profile_status ${1})" == "DOWN" ]]; then
+    commit_suicide "Profile already down: ${1}"
   fi
 }
 
@@ -99,7 +132,7 @@ function list_profiles(){
     FILTER_EXPR=".*"
   fi
   for PROFILE in $(find ${DIR} -type f | awk -F"/" '{print $NF}' | egrep "${FILTER_EXPR}" | sort); do
-    printf "%-20s = %s\n" ${PROFILE} "$(cat ${DIR}/${PROFILE})"
+    printf "%-20s %-4s = %s\n" ${PROFILE} $(get_profile_status ${PROFILE}) "$(cat ${DIR}/${PROFILE})"
   done
 }
 
@@ -137,6 +170,7 @@ function connect_profile(){
   local PROFILE=${1}
 
   suicide_on_absent_profile ${PROFILE}
+  suicide_on_profile_up ${PROFILE}
 
   set +e
   TRY=true
@@ -151,6 +185,15 @@ function connect_profile(){
       TRY=false
     fi
   done
+}
+
+function kill_profile() {
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+  suicide_on_profile_down ${PROFILE}
+
+  kill -INT $(get_profile_pid ${PROFILE})
 }
 
 function rename_profile(){
@@ -174,6 +217,11 @@ fi
 
 declare -r CMD=${1}; shift
 
+if [[ "${CMD}" == "" ]]; then
+  echo "- Bye bye!"
+  exit 0
+fi
+
 if [[ ! $(validate_command ${CMD}) ]]; then
   print_help_and_commit_suicide "Illegal command: ${CMD}"
 fi
@@ -183,7 +231,7 @@ if [[ "${CMD}" == "list" ]]; then
   exit 0
 fi
 
-if [[ "${CMD}" == "connect" || "${CMD}" == "delete" ]]; then
+if [[ "${CMD}" == "connect" || "${CMD}" == "delete"  || "${CMD}" == "kill" ]]; then
   if [[ ${#} -ne 1 ]]; then
     print_help_and_commit_suicide "Command requires exactly 1 parameter: ${CMD}"
   fi
