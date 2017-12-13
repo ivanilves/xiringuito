@@ -8,6 +8,7 @@ set -e
 set -o pipefail
 
 declare -r DIR=${HOME}/.xiringuito/profiles; mkdir -p ${DIR}
+declare -r LOG_DIR=${HOME}/.xiringuito/logs; mkdir -p ${LOG_DIR}
 declare -r RECONNECT_AFTER=5
 
 function print_help(){
@@ -15,8 +16,9 @@ function print_help(){
 [ xaval - xiringuito connection manager ]
 
 Usage: ${0} connect PROFILE
-       ${0} kill PROFILE
        ${0} list [FILTER_EXPR]
+       ${0} kill PROFILE
+       ${0} logs PROFILE
        ${0} create PROFILE XIRINGUITO_PARAMS
        ${0} update PROFILE XIRINGUITO_PARAMS
        ${0} upsert PROFILE XIRINGUITO_PARAMS
@@ -44,7 +46,7 @@ function print_help_and_commit_suicide(){
 }
 
 function validate_command(){
-  for _CMD in 'list' 'connect' 'create' 'update' 'upsert' 'delete' 'rename' 'kill'; do
+  for _CMD in 'connect' 'list' 'kill' 'logs' 'create' 'update' 'upsert' 'delete' 'rename'; do
     if [[ "${_CMD}" == "${1}" ]]; then
       echo "${1}"
       return
@@ -69,7 +71,7 @@ function get_profile_pid() {
 
   suicide_on_absent_profile ${PROFILE}
 
-  pgrep -U ${USER} -f -- "$(cat ${DIR}/${PROFILE})"
+  pgrep -U ${USER} -f -- "$(cat ${DIR}/${PROFILE} | sed 's/\+/\\\+/g')"
 }
 
 function get_profile_status() {
@@ -93,6 +95,23 @@ function suicide_on_profile_up(){
 function suicide_on_profile_down(){
   if [[ "$(get_profile_status ${1})" == "DOWN" ]]; then
     commit_suicide "Profile already down: ${1}"
+  fi
+}
+
+function do_mfa_prewarm(){
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  local PROFILE_FILE=${DIR}/${PROFILE}
+
+  ROUTES_PASSED=$(egrep "[0-9]/[0-9]+$" ${PROFILE_FILE} >/dev/null && echo "true" || echo "false")
+  DISCOVERY_OFF=$(egrep "(^| )-X "      ${PROFILE_FILE} >/dev/null && echo "true" || echo "false")
+
+  if [[ "${ROUTES_PASSED}" == "false" && "${DISCOVERY_OFF}" == "false" ]]; then
+    echo "true"
+  else
+    echo "false"
   fi
 }
 
@@ -166,15 +185,16 @@ function delete_profile(){
   rm ${DIR}/${PROFILE}
 }
 
-function connect_profile(){
+function loop_connection() {
+  trap "echo 'HUP is trapped'" HUP
+
   local PROFILE=${1}
 
-  suicide_on_absent_profile ${PROFILE}
-  suicide_on_profile_up ${PROFILE}
+  local TRY=true
+  local OPTS=""
 
   set +e
-  TRY=true
-  OPTS=""
+
   while [[ ${TRY} == true ]]; do
     $(dirname ${0})/xiringuito ${OPTS} $(cat ${DIR}/${PROFILE})
     if [[ ${?} -eq 0 || ${?} -eq 143 ]]; then
@@ -187,6 +207,25 @@ function connect_profile(){
   done
 }
 
+function connect_profile(){
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+  suicide_on_profile_up ${PROFILE}
+
+  local LOG_FILE=${LOG_DIR}/${PROFILE}
+
+  if [[ "$(do_mfa_prewarm ${PROFILE})" == "true" ]]; then
+    ./discover-routes $(awk '{print $NF}' ${DIR}/${PROFILE}) >/dev/null
+  fi
+
+  echo
+  echo "Connecting (in background): ${PROFILE}"
+  echo
+  echo "Use \"xaval logs ${PROFILE}\" to see connection logs"
+  loop_connection ${PROFILE} &>${LOG_FILE} &
+}
+
 function kill_profile() {
   local PROFILE=${1}
 
@@ -194,6 +233,19 @@ function kill_profile() {
   suicide_on_profile_down ${PROFILE}
 
   kill -INT $(get_profile_pid ${PROFILE})
+}
+
+function logs_profile() {
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  local LOG_FILE=${LOG_DIR}/${PROFILE}
+
+  cat ${LOG_FILE}
+
+  echo
+  echo "STATUS: $(get_profile_status ${PROFILE})"
 }
 
 function rename_profile(){
@@ -231,7 +283,8 @@ if [[ "${CMD}" == "list" ]]; then
   exit 0
 fi
 
-if [[ "${CMD}" == "connect" || "${CMD}" == "delete"  || "${CMD}" == "kill" ]]; then
+# ... this happens when you do not like case..esac ...
+if [[ "${CMD}" == "connect" || "${CMD}" == "delete"  || "${CMD}" == "kill" || "${CMD}" == "logs" ]]; then
   if [[ ${#} -ne 1 ]]; then
     print_help_and_commit_suicide "Command requires exactly 1 parameter: ${CMD}"
   fi
