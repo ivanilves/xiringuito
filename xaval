@@ -7,6 +7,8 @@
 set -e
 set -o pipefail
 
+echo -n "[ sudo check ] "; sudo true; echo
+
 declare -r DIR=${HOME}/.xiringuito/profiles; mkdir -p ${DIR}
 declare -r LOG_DIR=${HOME}/.xiringuito/logs; mkdir -p ${LOG_DIR}
 declare -r RECONNECT_AFTER=5
