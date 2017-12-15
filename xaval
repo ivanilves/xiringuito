@@ -7,8 +7,6 @@
 set -e
 set -o pipefail
 
-echo -n "[ sudo check ] "; sudo true; echo
-
 declare -r DIR=${HOME}/.xiringuito/profiles; mkdir -p ${DIR}
 declare -r LOG_DIR=${HOME}/.xiringuito/logs; mkdir -p ${LOG_DIR}
 declare -r RECONNECT_AFTER=5
@@ -210,6 +208,8 @@ function loop_connection() {
 }
 
 function connect_profile(){
+  echo -n "[ sudo check ] "; sudo true; echo
+
   local PROFILE=${1}
 
   suicide_on_absent_profile ${PROFILE}
