@@ -7,15 +7,24 @@
 set -e
 set -o pipefail
 
-declare -r DIR=${HOME}/.xiringuito/profiles; mkdir -p ${DIR}
-declare -r LOG_DIR=${HOME}/.xiringuito/logs; mkdir -p ${LOG_DIR}
+declare -r ROOT_DIR=${HOME}/.xiringuito
+declare -r DIR=${ROOT_DIR}/profiles; mkdir -p ${DIR}
+declare -r LOG_DIR=${ROOT_DIR}/logs; mkdir -p ${LOG_DIR}
 declare -r RECONNECT_AFTER=5
+
+declare -r ATTACH_MARKER="${ROOT_DIR}/attach"
+if [[ -f "${ATTACH_MARKER}" ]]; then
+  declare -r ATTACH=true
+else
+  declare -r ATTACH=false
+fi
 
 function print_help(){
   cat <<EOF
 [ xaval - xiringuito connection manager ]
 
-Usage: ${0} connect PROFILE
+Usage: ${0} connect|attach PROFILE
+       ${0} toggle
        ${0} list [FILTER_EXPR]
        ${0} kill PROFILE
        ${0} logs PROFILE
@@ -46,7 +55,7 @@ function print_help_and_commit_suicide(){
 }
 
 function validate_command(){
-  for _CMD in 'connect' 'list' 'kill' 'logs' 'create' 'update' 'upsert' 'delete' 'rename'; do
+  for _CMD in 'connect' 'attach' 'toggle' 'list' 'kill' 'logs' 'create' 'update' 'upsert' 'delete' 'rename'; do
     if [[ "${_CMD}" == "${1}" ]]; then
       echo "${1}"
       return
@@ -142,7 +151,11 @@ function select_profile(){
 
   local PROFILE=$(list_profiles | head -n${PROFILE_NUMBER} | tail -n1 | cut -d' ' -f1)
 
-  connect_profile ${PROFILE}
+  if [[ "${ATTACH}" == "true" ]]; then
+    attach_profile ${PROFILE}
+  else
+    connect_profile ${PROFILE}
+  fi
 }
 
 function list_profiles(){
@@ -185,6 +198,16 @@ function delete_profile(){
   rm ${DIR}/${PROFILE}
 }
 
+function toggle_attach {
+  if [[ "${ATTACH}" == "true" ]]; then
+    rm "${ATTACH_MARKER}"
+    echo "ATTACH: ON->OFF"
+  else
+    touch "${ATTACH_MARKER}"
+    echo "ATTACH: OFF->ON"
+  fi
+}
+
 function loop_connection() {
   trap "echo 'HUP is trapped'" HUP
 
@@ -205,6 +228,15 @@ function loop_connection() {
       TRY=false
     fi
   done
+}
+
+function attach_profile(){
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+  suicide_on_profile_up ${PROFILE}
+
+  loop_connection ${PROFILE}
 }
 
 function connect_profile(){
@@ -234,7 +266,7 @@ function kill_profile() {
   suicide_on_absent_profile ${PROFILE}
   suicide_on_profile_down ${PROFILE}
 
-  kill -INT $(get_profile_pid ${PROFILE})
+  kill -HUP $(get_profile_pid ${PROFILE})
 }
 
 function logs_profile() {
@@ -286,7 +318,7 @@ if [[ "${CMD}" == "list" ]]; then
 fi
 
 # ... this happens when you do not like case..esac ...
-if [[ "${CMD}" == "connect" || "${CMD}" == "delete"  || "${CMD}" == "kill" || "${CMD}" == "logs" ]]; then
+if [[ "${CMD}" == "connect" || "${CMD}" == "attach" || "${CMD}" == "delete"  || "${CMD}" == "kill" || "${CMD}" == "logs" ]]; then
   if [[ ${#} -ne 1 ]]; then
     print_help_and_commit_suicide "Command requires exactly 1 parameter: ${CMD}"
   fi
@@ -294,6 +326,12 @@ elif [[ ${CMD} == "rename" ]]; then
   if [[ ${#} -ne 2 ]]; then
     print_help_and_commit_suicide "Command requires exactly 2 parameters: ${CMD}"
   fi
+elif [[ ${CMD} == "toggle" ]]; then
+  if [[ ${#} -ne 0 ]]; then
+    print_help_and_commit_suicide "Command does not require any parameters: ${CMD}"
+  fi
+  toggle_attach
+  exit 0
 else
   if [[ ${#} -lt 2 ]]; then
     print_help_and_commit_suicide "Not enough parameters for the command: ${CMD}"
