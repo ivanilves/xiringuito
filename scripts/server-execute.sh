@@ -26,6 +26,7 @@ function teardown() {
   kill ${PPID}
   sleep 2
   [[ ! -x /usr/sbin/tunctl ]] && sudo ip tuntap del mode tun ${NETWORK_DEVICE} || sudo /usr/sbin/tunctl -d ${NETWORK_DEVICE}
+  sudo rm -f /etc/sudoers.d/xiringuito-${USER}
 }
 
 FAILED_PINGS=0
