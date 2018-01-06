@@ -39,6 +39,9 @@ You will need:
 ## Mac note
 Install [TunTap for Mac OS X](http://tuntaposx.sourceforge.net/) first.
 
+## Server-side sudo note
+If you do not have passwordless **sudo** on the side of SSH server, you will need to enter **sudo** password every time you connect to this server. You will be also unable to use `xaval` "background" connect option (see `xaval toggle`).
+
 ## Route discovery
 Specifying routes by hand is not bad. But we could make it better by creating an executable `discover-routes` script in the project directory. If no routes are passed by hand, `xiringuito` will run `discover-routes`, pass SSH server hostname to it and use script output as a list of routes, so you may have per-host or per-domain route lists instead of boring manual typing. More information is available in [AWS example](https://github.com/ivanilves/xiringuito/blob/master/discover-routes.aws.example) which uses AWS CLI to discover VPC subnets and route traffic to them through our VPN tunnel.
 
