@@ -102,9 +102,10 @@ cd $(dirname ${0})
 
 ./scripts/client-preexec.sh
 
-echo -n "[ sudo check ] "; sudo true; echo
-
 declare -r SSH_SERVER=${1}; shift
+
+echo -n "[ (client) sudo check ] "; sudo true; echo
+echo -n "[ (server) sudo check ] "; ./scripts/bootstrap-server-sudo.sh ${SSH_PRIVATE_KEY_OPTS} ${SSH_PORT_OPTS} ${SSH_EXTRA_OPTS} ${SSH_SERVER}; echo
 
 declare -r ROUTE_CACHE_PATH=~/.xiringuito/routes; mkdir -p ${ROUTE_CACHE_PATH}
 declare -r ROUTE_CACHE_FILE=${ROUTE_CACHE_PATH}/${SSH_SERVER}
