@@ -113,6 +113,9 @@ if [[ ${#} -gt 0 ]]; then
   declare -r NETWORKS=${@}
 elif [[ -x ./discover-routes && ! ${NO_ROUTE_DISCOVERY} ]]; then
   if [[ ${USE_ROUTE_CACHE} != true ]]; then
+    export SSH_PRIVATE_KEY_OPTS
+    export SSH_PORT_OPTS
+    export SSH_EXTRA_OPTS
     declare -r NETWORKS=$(./discover-routes ${SSH_SERVER} | grep "^ROUTE:" | sed 's/.*://')
     echo "${NETWORKS}" >"${ROUTE_CACHE_FILE}"
   else

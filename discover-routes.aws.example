@@ -10,7 +10,7 @@ fi
 export AWS_PROFILE=$(echo ${1} | awk -F"." '{print $2}')
 
 VPC_URL='http://169.254.169.254/latest/meta-data/network/interfaces/macs/$(/sbin/ip link show dev eth0 | grep link/ether | awk '"'"'{print $2}'"'"')/vpc-id'
-VPC_ID=$(ssh ${1} curl -s \"${VPC_URL}\")
+VPC_ID=$(ssh ${SSH_PRIVATE_KEY_OPTS} ${SSH_PORT_OPTS} ${SSH_EXTRA_OPTS} ${1} curl -s \"${VPC_URL}\")
 if [[ ${?} -eq 0 && -n "${VPC_ID}" ]]; then
   FILTER_PARAMS="--filters Name=vpc-id,Values=${VPC_ID}"
 fi
