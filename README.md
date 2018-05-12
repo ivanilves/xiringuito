@@ -54,7 +54,7 @@ As long as your routes do not overlap, you can run as many `xiringuito` tunnels 
 <img src="images/xiringuito.png" width="256px" />
 
 ## Future?
-Before, due to lack of testing, we had some complications with adding new features and changing `xiringuito` behavior, but since **[this PR](https://github.com/ivanilves/xiringuito/pull/32)** was merged, we are covered and will bravely proceed with addressing **[issues](https://github.com/ivanilves/xiringuito/issues)** and any challenges on our way.
+For now we can do bug fixes and minor UX improvements, however we see rewriting `xiringuito` in statically typed language as the major goal and a prerequirement before anything else.
 
 ## What's the difference between `xiringuito` and `sshuttle`?
 [sshuttle](https://github.com/apenwarr/sshuttle) is a very popular SSH over VPN client. Though both projects look similar, there are at least three differences:
