@@ -11,6 +11,7 @@ declare -r ROOT_DIR=${HOME}/.xiringuito
 declare -r DIR=${ROOT_DIR}/profiles; mkdir -p ${DIR}
 declare -r LOG_DIR=${ROOT_DIR}/logs; mkdir -p ${LOG_DIR}
 declare -r RECONNECT_AFTER=5
+declare -r WAIT_TIMEOUT=15
 
 declare -r ATTACH_MARKER="${ROOT_DIR}/attach"
 if [[ -f "${ATTACH_MARKER}" ]]; then
@@ -258,6 +259,28 @@ function connect_profile(){
   echo
   echo "Use \"xaval logs ${PROFILE}\" to see connection logs"
   loop_connection ${PROFILE} &>${LOG_FILE} &
+
+  wait_connection ${PROFILE}
+}
+
+function wait_connection(){
+  local PROFILE=${1}
+
+  sleep 2
+
+  local WAIT_TIME=0
+  while [[ "$(get_profile_status ${PROFILE})" != "UP" ]]; do
+    if [[ ${WAIT_TIME} -ge ${WAIT_TIMEOUT} ]]; then
+      dump_profile_log ${PROFILE}
+
+      commit_suicide "Unable to bring up \"${PROFILE}\" after ${WAIT_TIMEOUT} seconds"
+    fi
+
+    echo "* Waiting for connection to come up..."
+    sleep 1
+
+    ((++WAIT_TIME))
+  done
 }
 
 function kill_profile() {
@@ -280,6 +303,18 @@ function logs_profile() {
 
   echo
   echo "STATUS: $(get_profile_status ${PROFILE})"
+}
+
+function dump_profile_log() {
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  local LOG_FILE=${LOG_DIR}/${PROFILE}
+
+  echo "--- LOG ---" >>/dev/stderr
+  cat ${LOG_FILE} >>/dev/stderr
+  echo "--- LOG ---" >>/dev/stderr
 }
 
 function rename_profile(){
