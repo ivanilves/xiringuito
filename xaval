@@ -271,6 +271,8 @@ function wait_connection(){
   local WAIT_TIME=0
   while [[ "$(get_profile_status ${PROFILE})" != "UP" ]]; do
     if [[ ${WAIT_TIME} -ge ${WAIT_TIMEOUT} ]]; then
+      dump_profile_log ${PROFILE}
+
       commit_suicide "Unable to bring up \"${PROFILE}\" after ${WAIT_TIMEOUT} seconds"
     fi
 
@@ -301,6 +303,18 @@ function logs_profile() {
 
   echo
   echo "STATUS: $(get_profile_status ${PROFILE})"
+}
+
+function dump_profile_log() {
+  local PROFILE=${1}
+
+  suicide_on_absent_profile ${PROFILE}
+
+  local LOG_FILE=${LOG_DIR}/${PROFILE}
+
+  echo "--- LOG ---" >>/dev/stderr
+  cat ${LOG_FILE} >>/dev/stderr
+  echo "--- LOG ---" >>/dev/stderr
 }
 
 function rename_profile(){
