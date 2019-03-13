@@ -7,5 +7,5 @@ if [[ -n "${FORCE_NETWORK_SERVICE}" ]]; then
   exit 0
 fi
 
-DEF_GW_IF=$(netstat -nr | grep default | awk '{print $NF}' | grep -v tun | tail -n1)
+DEF_GW_IF=$(netstat -nr | grep default | awk '!/tun|!/ {print $NF}' | tail -n1)
 networksetup -listnetworkserviceorder | grep -B1 " Device: ${DEF_GW_IF})" | head -n1 | sed 's/^(.*) //'
