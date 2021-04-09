@@ -4,7 +4,7 @@
 #
 set -eo pipefail
 
-export PATH="${PATH}:$(dirname ${0})/helpers"
+export PATH="${PATH}:/usr/lib/xiringuito"
 export WAIT_VERBOSE=true
 
 function print_help() {
