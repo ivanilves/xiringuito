@@ -1,8 +1,8 @@
 Run:
 
-* "sudo make install" to install xiringuito
+* " make install" to install xiringuito
 
-* "sudo make unistall" to uninstall xiringuito
+* " make unistall" to uninstall xiringuito
 
 HINT:
 By default it will install software into `/usr/local/xiringuito` path

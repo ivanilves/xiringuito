@@ -241,7 +241,7 @@ function attach_profile(){
 }
 
 function connect_profile(){
-  echo -n "[ sudo check ] "; sudo true; echo
+  echo -n "[  check ] ";  true; echo
 
   local PROFILE=${1}
 

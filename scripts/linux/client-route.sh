@@ -9,4 +9,4 @@ if [[ ${#} -ne 2 ]]; then
   exit 1
 fi
 
-sudo ip route add ${2} dev tun${1}
+ ip route add ${2} dev tun${1}

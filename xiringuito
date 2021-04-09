@@ -104,8 +104,8 @@ cd $(dirname ${0})
 
 declare -r SSH_SERVER=${1}; shift
 
-echo -n "[ (client) sudo check ] "; sudo true; echo
-echo -n "[ (server) sudo check ] "; ./scripts/bootstrap-server-sudo.sh ${SSH_PRIVATE_KEY_OPTS} ${SSH_PORT_OPTS} ${SSH_EXTRA_OPTS} ${SSH_SERVER}; echo
+echo -n "[ (client)  check ] ";  true; echo
+echo -n "[ (server)  check ] "; ./scripts/bootstrap-server-.sh ${SSH_PRIVATE_KEY_OPTS} ${SSH_PORT_OPTS} ${SSH_EXTRA_OPTS} ${SSH_SERVER}; echo
 
 declare -r ROUTE_CACHE_PATH=~/.xiringuito/routes; mkdir -p ${ROUTE_CACHE_PATH}
 declare -r ROUTE_CACHE_FILE=${ROUTE_CACHE_PATH}/${SSH_SERVER}
@@ -149,7 +149,7 @@ trap teardown EXIT
 
 function teardown() {
   if [[ ! ${SSH_PID} ]]; then
-    sudo ./scripts/${KERNEL}/client-teardown.sh ${$} 0 ${LOCAL_TUNNEL_ID}
+     ./scripts/${KERNEL}/client-teardown.sh ${$} 0 ${LOCAL_TUNNEL_ID}
   fi
 }
 
@@ -171,11 +171,11 @@ set -e
 if [[ ${KERNEL} == linux ]]; then
   SSH_TUNNEL_CMD="ssh"
 else
-  SSH_TUNNEL_CMD="sudo -E ssh"
+  SSH_TUNNEL_CMD=" -E ssh"
 fi
 ${SSH_TUNNEL_CMD} ${SSH_OPTS} -oStrictHostKeyChecking=no -w ${LOCAL_TUNNEL_ID}:${TUNNEL_ID} ${SSH_SERVER} ${REMOTE_PATH}/server-execute.sh ${TUNNEL_ID} ${IP_BASE} ${MAX_FAILED_PINGS} &
 SSH_PID=${!}
-sudo -E ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
+ -E ./scripts/${KERNEL}/client-teardown.sh ${$} ${SSH_PID} ${LOCAL_TUNNEL_ID} &
 
 wait_for true 5 "ip link show dev tun${LOCAL_TUNNEL_ID} || ifconfig tun${LOCAL_TUNNEL_ID}" &>/dev/null
 

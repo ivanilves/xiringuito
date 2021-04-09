@@ -1,10 +1,12 @@
-INSTALL_PATH=/usr/local/xiringuito
-WRAPPER_PATH=/usr/local/bin
+DESTDIR=/
+INSTALL_PATH=$(DESTDIR)/usr/xiringuito
+WRAPPER_PATH=$(DESTDIR)/usr/bin
 
 help:
 	@cat INSTALL-HELP.txt
 
 install:
+	mkdir -p $(WRAPPER_PATH) || true
 	rsync -a ./ $(INSTALL_PATH)/
 	install -o root -g `id -g root` -m 0755 wrapper $(WRAPPER_PATH)/xiringuito
 	install -o root -g `id -g root` -m 0755 wrapper $(WRAPPER_PATH)/xaval

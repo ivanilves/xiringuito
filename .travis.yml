@@ -1,7 +1,7 @@
 notifications:
   email: false
 
-sudo: required
+: required
 
 services:
   - docker

@@ -38,16 +38,16 @@ fi
 set +e
 pkill -f ${TUNNEL_ID}/server-execute.sh
 if [[ ${?} -eq 0 ]]; then sleep 2; fi
-[[ ! -x /usr/sbin/tunctl ]] && sudo ip tuntap del mode tun ${NETWORK_DEVICE} || sudo /usr/sbin/tunctl -d ${NETWORK_DEVICE}
+[[ ! -x /usr/sbin/tunctl ]] &&  ip tuntap del mode tun ${NETWORK_DEVICE} ||  /usr/sbin/tunctl -d ${NETWORK_DEVICE}
 set -e
 
 # Set up network device
-if [[ ! $(sudo ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
-  sudo modprobe tun
+if [[ ! $( ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
+   modprobe tun
 
   if [[ ! -x /usr/sbin/tunctl ]]; then
     set +e
-    sudo ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE}
+     ip tuntap add mode tun user ${USER} ${NETWORK_DEVICE}
     if [[ ${?} -ne 0 ]]; then
       echo "NB! Failed to add tunX device on the server side!"
       echo "NB! Either you have old or not operational 'iproute2' package installed. :-|"
@@ -56,25 +56,25 @@ if [[ ! $(sudo ip link | grep " ${NETWORK_DEVICE}: ") ]]; then
     fi
     set -e
   else
-    sudo /usr/sbin/tunctl -u ${USER} -t ${NETWORK_DEVICE}
+     /usr/sbin/tunctl -u ${USER} -t ${NETWORK_DEVICE}
   fi
 
-  sudo ip link set ${NETWORK_DEVICE} up
-  sudo ip addr add ${SERVER_IP_ADDR}/32 peer ${CLIENT_IP_ADDR} dev ${NETWORK_DEVICE}
+   ip link set ${NETWORK_DEVICE} up
+   ip addr add ${SERVER_IP_ADDR}/32 peer ${CLIENT_IP_ADDR} dev ${NETWORK_DEVICE}
 fi
 
 # Set up SSH server for tunneling
-if [[ ! $(sudo grep "^PermitTunnel yes" ${SSHD_CONFIG_FILE}) ]]; then
-  echo "PermitTunnel yes" | sudo tee -a ${SSHD_CONFIG_FILE}
-  sudo ${SSHD_RESTART_CMD}
+if [[ ! $( grep "^PermitTunnel yes" ${SSHD_CONFIG_FILE}) ]]; then
+  echo "PermitTunnel yes" |  tee -a ${SSHD_CONFIG_FILE}
+   ${SSHD_RESTART_CMD}
 fi
 
 # We need IPv4 forwarding to enable packet traversal
-if [[ ! $(sudo sysctl -a 2>/dev/null | grep "net.ipv4.ip_forward.*=.*1") ]]; then
-  sudo sysctl -w net.ipv4.ip_forward=1
+if [[ ! $( sysctl -a 2>/dev/null | grep "net.ipv4.ip_forward.*=.*1") ]]; then
+   sysctl -w net.ipv4.ip_forward=1
 fi
 
 # We need IPv4 NAT
-if [[ ! $(sudo iptables -t nat -nvL POSTROUTING | grep " ${CLIENT_IP_ADDR} ") ]]; then
-  sudo iptables -t nat -A POSTROUTING -s ${CLIENT_IP_ADDR} -j MASQUERADE
+if [[ ! $( iptables -t nat -nvL POSTROUTING | grep " ${CLIENT_IP_ADDR} ") ]]; then
+   iptables -t nat -A POSTROUTING -s ${CLIENT_IP_ADDR} -j MASQUERADE
 fi

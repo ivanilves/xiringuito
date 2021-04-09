@@ -2,7 +2,7 @@ FROM centos:7
 
 LABEL maintainer "ivan.ilves@gmail.com"
 
-RUN yum -y install openssh-server openssh-clients sudo iproute iputils iptables \
+RUN yum -y install openssh-server openssh-clients  iproute iputils iptables \
   && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa \
   && mkdir -p /lib/systemd/system && touch /lib/systemd/system/ssh.service \
   && rm /sbin/modprobe && ln -s /bin/true /sbin/modprobe \

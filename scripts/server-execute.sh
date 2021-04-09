@@ -22,11 +22,11 @@ fi
 trap teardown EXIT
 
 function teardown() {
-  sudo iptables -t nat -D POSTROUTING -s ${CLIENT_IP_ADDR} -j MASQUERADE
+   iptables -t nat -D POSTROUTING -s ${CLIENT_IP_ADDR} -j MASQUERADE
   kill ${PPID}
   sleep 2
-  [[ ! -x /usr/sbin/tunctl ]] && sudo ip tuntap del mode tun ${NETWORK_DEVICE} || sudo /usr/sbin/tunctl -d ${NETWORK_DEVICE}
-  sudo rm -f /etc/sudoers.d/xiringuito-${USER}
+  [[ ! -x /usr/sbin/tunctl ]] &&  ip tuntap del mode tun ${NETWORK_DEVICE} ||  /usr/sbin/tunctl -d ${NETWORK_DEVICE}
+   rm -f /etc/ers.d/xiringuito-${USER}
 }
 
 FAILED_PINGS=0

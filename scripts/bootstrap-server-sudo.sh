@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Bootstrap sudoers.d config on server side before doing anything else!
+# Bootstrap ers.d config on server side before doing anything else!
 #
 set -eo pipefail
 
@@ -11,10 +11,10 @@ fi
 
 declare -r SUDO_CONF="'ALL=(ALL) NOPASSWD:ALL'"
 declare -r SUDO_NOTE="'# Managed by xiringuito, DO NOT EDIT!!!'"
-declare -r BASE_NAME=/etc/sudoers.d/xiringuito
+declare -r BASE_NAME=/etc/ers.d/xiringuito
 declare -r STDOUTERR=/tmp/xiringuito.$(basename ${0}).${USER}
 
 ssh -t -oStrictHostKeyChecking=no ${@} \
-  "sudo true && sudo bash -c \
+  " true &&  bash -c \
     \"umask 0337 && echo -e ${SUDO_NOTE}'\n'\${USER} ${SUDO_CONF} | tee ${BASE_NAME}-\${USER}\" >/dev/null" \
     &>${STDOUTERR} || (cat ${STDOUTERR} >>/dev/stderr && exit 1)

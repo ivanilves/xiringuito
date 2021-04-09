@@ -9,4 +9,4 @@ if [[ ${#} -ne 2 ]]; then
   exit 1
 fi
 
-sudo route add -net ${2} -interface tun${1}
+ route add -net ${2} -interface tun${1}

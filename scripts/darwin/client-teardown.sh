@@ -33,6 +33,6 @@ fi
 NETWORK_SERVICE="$($(dirname ${0})/get-network-service-name.sh)"
 if [[ -f /tmp/xiringuito.dns.${LOCAL_TUNNEL_ID} ]]; then
   DNS_SERVERS=$(cat /tmp/xiringuito.dns.${LOCAL_TUNNEL_ID})
-  sudo networksetup -setdnsservers "${NETWORK_SERVICE}" ${DNS_SERVERS}
+   networksetup -setdnsservers "${NETWORK_SERVICE}" ${DNS_SERVERS}
   rm /tmp/xiringuito.dns.${LOCAL_TUNNEL_ID}
 fi
