@@ -59,7 +59,7 @@ For now we can do bug fixes and minor UX improvements, however we see rewriting 
 ## What's the difference between `xiringuito` and `sshuttle`?
 [sshuttle](https://github.com/apenwarr/sshuttle) is a very popular SSH over VPN client. Though both projects look similar, there are at least three differences:
 
-* `xiringuito` works well with RTP (Real-time Transport Protocol). This is a UDP-based protocol, the key difference between RTP and most of other UDP protocols - it used bi-directional media transport with random ports assigned on both ends. For me `sshuttle` was unable to correctly to handle RTP traffic, while `xiringuito` due to utilization of tun/tap devices, does it transparently w/o issues.
+* `xiringuito` works well with RTP (Real-time Transport Protocol). This is a UDP-based protocol, the key difference between RTP and most of other UDP protocols - it used bi-directional media transport with random ports assigned on both ends. For me `sshuttle` was unable to correctly handle RTP traffic, while `xiringuito` due to utilization of tun/tap devices, does it transparently w/o issues.
 
 * For the same reason `xiringuito` works with low-level (non-TCP & non-UDP) IP protocols like OSPF, L2TP, PPP, IGMP, IPSec, ARP, etc. While nobody should use SSH tun/tap to tunnel these protocols on production, `xiringuito` may serve you great to do some remote testing of these protocols with SSH-only connection to the infrastructure.
 
